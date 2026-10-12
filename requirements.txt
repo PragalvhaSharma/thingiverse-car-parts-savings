@@ -1,0 +1,20 @@
+# Python 3.10 or newer.
+#   python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
+
+# steps 1-3: the three model calls, the Thingiverse harvest, eBay and the web fallback
+openai>=1.40
+pydantic>=2
+requests>=2.31
+# Chrome's TLS handshake for thingiverse.com and ebay.com, which challenge plain requests
+curl_cffi>=0.10
+beautifulsoup4>=4.12
+Pillow>=10
+python-dotenv>=1.0
+
+# step 4: OrcaSlicer over MCP, and the geometry checks (piece count, size, the estimator)
+mcp>=1.2
+trimesh>=4
+numpy
+scipy
+networkx
+lxml

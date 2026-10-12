@@ -1,0 +1,949 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Every printable car part — one list</title>
+<meta name="description" content="Every printable car part in the corpus in one list: what it slices to, what the same part sells for, and the savings that follow. Sort, filter, and open any row on its brand page to review the match.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#128663;</text></svg>">
+<style>
+  :root {
+    --ivory:  #FAF9F5;
+    --paper:  #FFFFFF;
+    --slate:  #141413;
+    --clay:   #D97757;
+    --clay-d: #B85C3E;
+    --oat:    #E3DACC;
+    --olive:  #788C5D;
+    --g100:   #F0EEE6;
+    --g200:   #E6E3DA;
+    --g300:   #D1CFC5;
+    --g500:   #87867F;
+    --g700:   #3D3D3A;
+    --repair: #B85C3E;
+    --upgrade:#2a78d6;
+    --assembly:#788C5D;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --border: 1px solid var(--g200);
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--ivory); color: var(--slate);
+    font-family: var(--sans); font-size: 14px; line-height: 1.5;
+  }
+  a { color: var(--clay-d); }
+
+  /* ---- sticky chrome ---- */
+  header.top {
+    position: sticky; top: 0; z-index: 30;
+    background: color-mix(in srgb, var(--ivory) 92%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: var(--border);
+    padding: 10px 22px 0;
+  }
+  .top-row { display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; }
+  .brand {
+    font-family: var(--serif); font-size: 18px; font-weight: 500;
+    letter-spacing: -0.02em; margin-right: auto;
+  }
+  .brand em { font-style: italic; color: var(--clay); }
+  .up { font-size: 12px; text-decoration: none; color: var(--g500); }
+  .up:hover { color: var(--clay-d); }
+  .stat { font-variant-numeric: tabular-nums; min-width: 8.8rem; }
+  .stat .k {
+    font-family: var(--mono); font-size: 9.5px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--g500);
+  }
+  .stat .v { font-family: var(--serif); font-size: 17px; font-weight: 500; line-height: 1.15; letter-spacing: -0.02em; }
+  .stat.repair .v { color: var(--repair); }
+  .stat.upgrade .v { color: var(--upgrade); }
+  .stat.assembly .v { color: var(--assembly); }
+
+  /* ---- controls ---- */
+  .tools { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 11px 0 10px; }
+  .search {
+    flex: 1 1 260px; min-width: 200px; max-width: 420px;
+    font: inherit; font-size: 13px; padding: 7px 11px;
+    border: var(--border); border-radius: 7px; background: var(--paper); color: var(--slate);
+  }
+  .search:focus { outline: 2px solid color-mix(in srgb, var(--clay) 45%, transparent); outline-offset: -1px; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    font: inherit; font-size: 12px; padding: 5px 11px; cursor: pointer;
+    border: var(--border); border-radius: 999px; background: var(--paper); color: var(--g700);
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .chip:hover { border-color: var(--g300); }
+  .chip[aria-pressed="true"] { background: var(--slate); color: var(--ivory); border-color: var(--slate); }
+  .chip .n { opacity: .55; margin-left: 5px; font-family: var(--mono); font-size: 10.5px; }
+  .sortsel {
+    font: inherit; font-size: 12px; padding: 6px 9px; border: var(--border);
+    border-radius: 7px; background: var(--paper); color: var(--g700);
+  }
+  .count { font-size: 12px; color: var(--g500); font-variant-numeric: tabular-nums; margin-left: auto; }
+  .count b { color: var(--slate); font-weight: 600; }
+
+  /* ---- list ---- */
+  main { max-width: 1180px; margin: 0 auto; padding: 16px 22px 80px; }
+  .lede { font-size: 13.5px; color: var(--g700); max-width: 74ch; margin: 6px 2px 16px; }
+  .lede b { color: var(--slate); font-weight: 600; }
+
+  #scroller { position: relative; }
+  .row {
+    position: absolute; left: 0; right: 0;
+    border: var(--border); border-radius: 10px; background: var(--paper);
+    overflow: hidden; contain: layout paint;
+  }
+  .rhead {
+    display: grid; grid-template-columns: 62px 62px 1fr 118px 132px;
+    gap: 13px; align-items: center; padding: 9px 13px; cursor: pointer; height: 84px;
+  }
+  .rhead:hover { background: var(--ivory); }
+  .thumb {
+    width: 62px; height: 62px; border-radius: 7px; background: var(--g100);
+    border: 1px solid var(--g200); object-fit: contain; display: block;
+  }
+  .thumb.miss {
+    display: grid; place-items: center; font-family: var(--mono);
+    font-size: 8.5px; color: var(--g500); text-align: center; line-height: 1.25;
+  }
+  .rmain { min-width: 0; }
+  .rt {
+    font-family: var(--serif); font-size: 15.5px; letter-spacing: -0.01em;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .rsub {
+    font-size: 12px; color: var(--g500); margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .rsub .veh { color: var(--g700); }
+  .badge {
+    display: inline-block; font-family: var(--mono); font-size: 9.5px;
+    letter-spacing: .07em; text-transform: uppercase; padding: 2px 7px;
+    border-radius: 999px; border: 1px solid currentColor; margin-right: 7px;
+    vertical-align: 1px;
+  }
+  .badge.repair   { color: var(--repair); }
+  .badge.assembly { color: var(--assembly); }
+  .badge.upgrade  { color: var(--upgrade); }
+  .badge.none     { color: var(--g500); }
+  .badge.sx       { color: var(--g500); border-style: dashed; }
+  .rmid { text-align: right; font-variant-numeric: tabular-nums; font-size: 11.5px; color: var(--g500); }
+  .rmid .l { color: var(--g700); }
+  .rtot { text-align: right; font-variant-numeric: tabular-nums; }
+  .rtot .v {
+    font-family: var(--serif); font-size: 17px; font-weight: 500; letter-spacing: -0.025em;
+  }
+  .rtot.repair .v   { color: var(--repair); }
+  .rtot.assembly .v { color: var(--assembly); }
+  .rtot.upgrade .v  { color: var(--upgrade); }
+  .rtot.none .v     { color: var(--g300); }
+  .rtot .n { font-size: 10.5px; color: var(--g500); }
+
+  /* ---- expanded detail ---- */
+  .detail { border-top: var(--border); background: var(--ivory); padding: 15px 15px 16px; }
+  .dgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+  .pane { background: var(--paper); border: var(--border); border-radius: 9px; padding: 11px; min-width: 0; }
+  .pane h4 {
+    margin: 0 0 8px; font-family: var(--mono); font-size: 9.5px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--g500); font-weight: 500;
+  }
+  .pane img { width: 100%; height: 168px; object-fit: contain; background: var(--g100); border-radius: 6px; }
+  .pane .cap {
+    font-size: 12px; color: var(--g700); margin-top: 8px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .pane .none { height: 168px; display: grid; place-items: center; color: var(--g500); font-size: 12px;
+                background: var(--g100); border-radius: 6px; }
+  .math {
+    margin-top: 13px; background: var(--paper); border: var(--border); border-radius: 9px;
+    padding: 11px 13px; display: flex; gap: 22px; flex-wrap: wrap; align-items: baseline;
+    font-variant-numeric: tabular-nums;
+  }
+  .math div { font-size: 12px; color: var(--g500); }
+  .math b { display: block; font-family: var(--serif); font-size: 17px; font-weight: 500; color: var(--slate); }
+  .math .eq { color: var(--g300); font-size: 15px; }
+  .acts { margin-top: 12px; display: flex; gap: 9px; flex-wrap: wrap; align-items: center; }
+
+  /* ---- decide: the controls that were only on the brand pages ---- */
+  .decide { margin-top: 13px; border: var(--border); border-radius: 9px; background: var(--paper); }
+  .decide > .lab {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
+    padding: 9px 13px; border-bottom: var(--border);
+    font-family: var(--mono); font-size: 9.5px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--g500);
+  }
+  .decide > .lab a { color: var(--clay-d); text-transform: none; letter-spacing: 0; font-size: 11px; }
+  .pool { display: flex; gap: 9px; overflow-x: auto; padding: 11px 13px; }
+  .cand {
+    flex: 0 0 152px; border: var(--border); border-radius: 8px; padding: 8px;
+    background: var(--paper); display: flex; flex-direction: column; gap: 6px;
+  }
+  .cand.chosen { border-color: var(--clay); box-shadow: 0 0 0 1px var(--clay) inset; }
+  .cand img { width: 100%; height: 84px; object-fit: contain; background: var(--g100); border-radius: 5px; }
+  .cand .cp { font-family: var(--serif); font-size: 15px; font-variant-numeric: tabular-nums; }
+  .cand .cp small { font-family: var(--sans); font-size: 10.5px; color: var(--g500); }
+  .cand .ct {
+    font-size: 11px; color: var(--g700); line-height: 1.35;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .cand .cnew { font-size: 10.5px; color: var(--g500); font-variant-numeric: tabular-nums; }
+  .pick {
+    font: inherit; font-size: 11.5px; padding: 5px 8px; cursor: pointer; margin-top: auto;
+    border: 1px solid var(--olive); border-radius: 6px; background: var(--paper); color: var(--olive);
+  }
+  .pick:hover { background: var(--olive); color: #fff; }
+  .nopool { padding: 11px 13px; font-size: 12.5px; color: var(--g500); }
+  .manual { padding: 0 13px 12px; }
+  .manual .mrow { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .manual input {
+    font: inherit; font-size: 12px; padding: 6px 9px; border: var(--border);
+    border-radius: 6px; background: var(--paper); color: var(--slate);
+  }
+  .manual .mu { flex: 3 1 220px; min-width: 160px; }
+  .manual .mp, .manual .ms { flex: 0 1 92px; min-width: 72px; }
+  .manual .mhint { font-size: 11px; color: var(--g500); margin: 7px 0 0; }
+  .btn.veto { border-color: #b3261e; color: #b3261e; }
+  .btn.veto:hover { background: #b3261e; color: #fff; }
+  .btn.keep { border-color: var(--olive); color: var(--olive); }
+  .btn.keep:hover { background: var(--olive); color: #fff; }
+  .btn.on { background: var(--slate); color: var(--ivory); border-color: var(--slate); }
+  .bucketpick { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; padding: 0 13px 12px; }
+  .bucketpick .bl {
+    font-family: var(--mono); font-size: 9.5px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--g500); margin-right: 3px;
+  }
+  .bk {
+    font: inherit; font-size: 11.5px; padding: 4px 10px; cursor: pointer;
+    border: var(--border); border-radius: 999px; background: var(--paper); color: var(--g700);
+  }
+  .bk:hover { border-color: var(--g300); }
+  .bk[aria-pressed="true"].repair   { background: var(--repair);   color: #fff; border-color: var(--repair); }
+  .bk[aria-pressed="true"].assembly { background: var(--assembly); color: #fff; border-color: var(--assembly); }
+  .bk[aria-pressed="true"].upgrade  { background: var(--upgrade);  color: #fff; border-color: var(--upgrade); }
+  .bkwhy { font-size: 11px; color: var(--g500); flex-basis: 100%; margin-top: 2px; }
+  .verdict { font-size: 12px; color: var(--g700); margin-left: 2px; font-variant-numeric: tabular-nums; }
+  .verdict b { font-family: var(--serif); font-size: 15px; }
+  .badge.vetoed { color: #b3261e; }
+  .badge.rescued, .badge.swapped { color: var(--olive); }
+  .savepill {
+    position: fixed; right: 16px; bottom: 16px; z-index: 40;
+    opacity: 0; visibility: hidden; transform: translateY(6px);
+    transition: opacity .18s ease, transform .18s ease, visibility .18s;
+    pointer-events: none;
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase;
+    padding: 7px 13px; border-radius: 999px; border: var(--border);
+    background: var(--paper); color: var(--g500); box-shadow: 0 2px 10px rgba(0,0,0,.07);
+  }
+  .savepill.show { opacity: 1; visibility: visible; transform: none; }
+  .savepill.busy { color: var(--clay-d); border-color: var(--clay); }
+  .savepill.err  { color: #b3261e; border-color: #b3261e; }
+  .savepill.ok   { color: var(--olive); border-color: var(--olive); }
+  .btn {
+    font: inherit; font-size: 12px; text-decoration: none; padding: 6px 12px;
+    border-radius: 7px; border: var(--border); background: var(--paper); color: var(--g700);
+  }
+  .btn:hover { border-color: var(--g300); }
+  .btn.go { background: var(--slate); color: var(--ivory); border-color: var(--slate); }
+  .empty { text-align: center; color: var(--g500); padding: 60px 20px; font-size: 14px; }
+
+  @media (max-width: 860px) {
+    .rhead { grid-template-columns: 52px 52px 1fr 96px; gap: 10px; }
+    .rmid { display: none; }
+    .dgrid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+  <header class="top">
+    <div class="top-row">
+      <div class="brand">Every printable car part &mdash; <em>one list</em></div>
+      <a class="up" href="index.html">&larr; Overview &amp; brands</a>
+      <div class="stat"><div class="k">Showing</div><div class="v" id="s-n">&mdash;</div></div>
+      <div class="stat repair"><div class="k">Repair</div><div class="v" id="s-repair">&mdash;</div></div>
+      <div class="stat assembly"><div class="k">Assembly</div><div class="v" id="s-asm">&mdash;</div></div>
+      <div class="stat upgrade"><div class="k">Upgrade</div><div class="v" id="s-upg">&mdash;</div></div>
+      <div class="stat"><div class="k">Your edits</div><div class="v" id="s-edits">0</div></div>
+    </div>
+    <div class="tools">
+      <input class="search" id="q" type="search" placeholder="Search title, part, brand, model&hellip;" autocomplete="off">
+      <div class="chips" id="chips"></div>
+      <select class="sortsel" id="sort">
+        <option value="tot">Sort: dollars at stake</option>
+        <option value="spp">Sort: saving per print</option>
+        <option value="dl">Sort: downloads</option>
+        <option value="p">Sort: listing price</option>
+        <option value="t">Sort: title (A&ndash;Z)</option>
+        <option value="br">Sort: brand (A&ndash;Z)</option>
+      </select>
+      <button class="chip" id="x-csv" type="button" title="Download the rows currently shown, in the current order">Export CSV</button>
+      <button class="chip" id="x-json" type="button" title="Download the decisions map — apply_review.py reads this file directly">Export decisions</button>
+      <div class="count" id="count"></div>
+    </div>
+  </header>
+
+  <main>
+    <p class="lede">All <b>9,190</b> Things the pipeline scored, in one list &mdash; counted and
+    uncounted together, biggest dollars first. Each row pairs the Thing's own render with the eBay
+    listing it was priced against. Click a row for the arithmetic; open it on its brand page to
+    confirm, veto or swap the match &mdash; that is where decisions are stored.</p>
+    <div id="scroller"></div>
+    <div class="empty" id="empty" hidden>Nothing matches those filters.</div>
+  </main>
+  <div class="savepill" id="save" role="status" aria-live="polite"></div>
+
+<script id="payload" type="application/json"> /* PAYLOAD REMOVED */ </script>
+<script>
+(function () {
+  "use strict";
+  var P = JSON.parse(document.getElementById("payload").textContent);
+  var ROWS = P.rows, M = P.meta;
+
+  // Image URLs are stored as their variable segment only (see _all_tpl.py).
+  function thingImg(v) {
+    if (!v) return "";
+    return v.charAt(0) === "!" ? v.slice(1)
+      : "https://resize.thingiverse.com/?url=https://cdn.thingiverse.com/" + v +
+        "&w=292&h=219&fit=contain&cbg=white&n=-1";
+  }
+  function listImg(v) {
+    if (!v) return "";
+    return v.charAt(0) === "!" ? v.slice(1)
+      : "https://i.ebayimg.com/images/g/" + v + "/s-l500.webp";
+  }
+  // resize.thingiverse.com 403s any request carrying a Referer, so both panes
+  // go through the deploy's allowlisted proxy.
+  function proxy(u) { return u ? "/api/img?url=" + encodeURIComponent(u) : ""; }
+
+  // Every dollar figure on this page is exact — an abbreviated "$16M" reads as
+  // a claim nobody can check, and these are the numbers being defended.
+  function usd(n) { return "$" + Math.round(n || 0).toLocaleString("en-US"); }
+  function usdc(n) { return "$" + (n || 0).toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
+  function num(n) { return (n || 0).toLocaleString("en-US"); }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return {"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c];
+    });
+  }
+  var COUNTED = {repair: 1, assembly: 1, upgrade: 1};
+
+  // ---- decisions -----------------------------------------------------------
+  // Same blobs the brand pages use: /api/state?key=<brand slug>, decisions keyed
+  // by thing_id. A decision made here shows up there and vice versa. Loading all
+  // 78 blobs up front is exactly what the per-brand split exists to avoid, so a
+  // brand's map is fetched the first time one of its rows is expanded.
+  var decisions = {};          // id -> "keep" | "veto" | {v:"accept",...}
+  var loaded = {};             // brand slug -> true | Promise
+  var pools = {};              // thing id -> [candidates]  (fetched on expand)
+  var edits = 0;
+  var LOCAL = "tv-all-decisions-v1";
+
+  function slugOf(r) { return (r.href.match(/^b\/([^.]+)\.html/) || [])[1] || ""; }
+
+  function localAll() {
+    try { return JSON.parse(localStorage.getItem(LOCAL) || "{}"); } catch (e) { return {}; }
+  }
+  function localSet(id, v) {
+    try {
+      var m = localAll();
+      if (v == null) delete m[id]; else m[id] = v;
+      localStorage.setItem(LOCAL, JSON.stringify(m));
+    } catch (e) {}
+  }
+
+  // The pill is fixed to the bottom-right, so leaving it up permanently parked a
+  // label over the list. It only appears when it has something to report, and
+  // clears itself after — errors linger long enough to read, the rest do not.
+  var saveTimer;
+  function setSave(cls, msg) {
+    var el = document.getElementById("save");
+    el.className = "savepill show" + (cls ? " " + cls : "");
+    el.textContent = msg;
+    clearTimeout(saveTimer);
+    if (cls !== "busy") {
+      saveTimer = setTimeout(function () {
+        el.className = "savepill" + (cls ? " " + cls : "");
+      }, cls === "err" ? 6000 : 2200);
+    }
+  }
+
+  function loadBrand(slug) {
+    if (loaded[slug]) return Promise.resolve();
+    loaded[slug] = true;
+    return fetch("/api/state?key=" + encodeURIComponent(slug), {cache: "no-store"})
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (j && j.ok && j.decisions) {
+          Object.keys(j.decisions).forEach(function (id) { decisions[id] = j.decisions[id]; });
+        } else if (j && j.reason === "no-blob") {
+          // no Blob store connected — fall back to this browser only
+          var m = localAll();
+          Object.keys(m).forEach(function (id) { decisions[id] = m[id]; });
+          setSave("err", "saving locally only");
+        }
+      })
+      .catch(function () { setSave("err", "offline — saved locally"); });
+  }
+
+  function decide(r, v) {
+    var id = r.i, slug = slugOf(r);
+    // An accept must carry the bucket forward. Picking "Assembly-only" and then
+    // choosing a listing used to drop `b`, and apply_review.py refuses an accept
+    // it cannot bank — the decision would have looked saved and applied to
+    // nothing.
+    var prev = decisions[id];
+    if (v && typeof v === "object" && !v.b && prev && typeof prev === "object" && prev.b) {
+      v.b = prev.b;
+    }
+    if (v == null) delete decisions[id]; else decisions[id] = v;
+    localSet(id, v);
+    edits++;
+    document.getElementById("s-edits").textContent = num(edits);
+    setSave("busy", "saving…");
+    fetch("/api/state?key=" + encodeURIComponent(slug), {
+      method: "POST",
+      headers: {"content-type": "application/json"},
+      body: JSON.stringify({id: id, v: v})
+    }).then(function (x) { return x.json(); })
+      .then(function (j) {
+        setSave(j && j.ok ? "ok" : "err",
+                j && j.ok ? "saved to " + slug : "saved locally only");
+      })
+      .catch(function () { setSave("err", "offline — saved locally"); });
+    layout();
+  }
+
+  // pipeline.py's arithmetic, verbatim — same as contrib() on the brand pages,
+  // so a row re-priced here and one re-priced there land on the same number
+  function contrib(r, price) {
+    var per = Math.round(Math.max(price - r.pc, 0) * 100) / 100;
+    return Math.round(per * r.dl * 100) / 100;
+  }
+  function decisionOf(r) {
+    var d = decisions[r.i];
+    if (d === "keep" || d === "veto") return d;
+    if (d && typeof d === "object" && d.v === "accept" && d.u && d.p > 0) return d;
+    return null;
+  }
+  // what this row is worth right now, given any decision on it
+  function liveTot(r) {
+    var d = decisionOf(r);
+    if (d === "veto") return 0;
+    if (d && d.v === "accept") return contrib(r, d.p);
+    return r.tot;
+  }
+  // Pools live in cars/pools/<id>.json rather than in this page: ~4,900 of them
+  // inline is 10.7 MB, and a reader opens a handful.
+  function loadPool(r) {
+    if (!r.hp || pools[r.i]) return Promise.resolve();
+    pools[r.i] = [];            // claim it, so a double-click fetches once
+    return fetch("pools/" + encodeURIComponent(r.i) + ".json", {cache: "force-cache"})
+      .then(function (x) { return x.ok ? x.json() : null; })
+      .then(function (j) { if (j && j.cands) pools[r.i] = j.cands; })
+      .catch(function () {});
+  }
+  function poolOf(r) { return pools[r.i] || []; }
+
+  function stateBadge(r) {
+    var d = decisionOf(r);
+    if (d === "veto") return {cls: "vetoed", label: "vetoed"};
+    if (d && d.v === "accept") return COUNTED[r.bkt]
+      ? {cls: "swapped", label: "swapped"} : {cls: "rescued", label: "rescued"};
+    return null;
+  }
+
+  // ---- filter state --------------------------------------------------------
+  var FILTERS = [
+    {k: "all",      t: "All",          test: function () { return true; }},
+    {k: "counted",  t: "Counted",      test: function (r) { return !!COUNTED[r.bkt]; }},
+    {k: "uncounted",t: "Uncounted",    test: function (r) { return !COUNTED[r.bkt]; }},
+    {k: "repair",   t: "Repair",       test: function (r) { return r.bkt === "repair"; }},
+    {k: "assembly", t: "Assembly-only",test: function (r) { return r.bkt === "assembly"; }},
+    {k: "upgrade",  t: "Upgrade",      test: function (r) { return r.bkt === "upgrade"; }},
+    {k: "sx",       t: "Scale-guarded",test: function (r) { return !!r.sx; }},
+    {k: "nomatch",  t: "No listing",   test: function (r) { return !r.surl; }}
+  ];
+  var state = {f: "all", q: "", sort: "tot", open: null};
+
+  document.getElementById("chips").innerHTML = FILTERS.map(function (f) {
+    var n = f.k === "all" ? ROWS.length : ROWS.filter(f.test).length;
+    return '<button class="chip" data-f="' + f.k + '" aria-pressed="' + (f.k === "all") + '">' +
+      esc(f.t) + '<span class="n">' + num(n) + '</span></button>';
+  }).join("");
+
+  var view = [];
+  function applyFilters() {
+    var f = FILTERS.filter(function (x) { return x.k === state.f; })[0] || FILTERS[0];
+    var q = state.q.trim().toLowerCase();
+    var terms = q ? q.split(/\s+/) : [];
+    view = ROWS.filter(function (r) {
+      if (!f.test(r)) return false;
+      if (!terms.length) return true;
+      var hay = r._h || (r._h = [r.t, r.part, r.br, r.mdl, r.lt].join(" ").toLowerCase());
+      for (var i = 0; i < terms.length; i++) if (hay.indexOf(terms[i]) < 0) return false;
+      return true;
+    });
+    var s = state.sort;
+    if (s === "t" || s === "br") {
+      view.sort(function (a, b) {
+        var x = (a[s] || "").toLowerCase(), y = (b[s] || "").toLowerCase();
+        return x < y ? -1 : x > y ? 1 : b.tot - a.tot;
+      });
+    } else {
+      view.sort(function (a, b) { return (b[s] || 0) - (a[s] || 0) || b.tot - a.tot; });
+    }
+    state.open = null;
+    layout();
+    paintStats();
+  }
+
+  function paintStats() {
+    var n = 0, rep = 0, asm = 0, upg = 0;
+    for (var i = 0; i < view.length; i++) {
+      var r = view[i]; n++;
+      if (r.bkt === "repair") rep += r.tot;
+      else if (r.bkt === "assembly") asm += r.tot;
+      else if (r.bkt === "upgrade") upg += r.tot;
+    }
+    document.getElementById("s-n").textContent = num(n);
+    document.getElementById("s-repair").textContent = usd(rep);
+    document.getElementById("s-asm").textContent = usd(asm);
+    document.getElementById("s-upg").textContent = usd(upg);
+    var counted = view.filter(function (r) { return !!COUNTED[r.bkt]; }).length;
+    document.getElementById("count").innerHTML =
+      "<b>" + num(n) + "</b> of " + num(ROWS.length) + " &middot; " +
+      num(counted) + " counted &middot; " + usd(rep + asm + upg) + " total";
+    document.getElementById("empty").hidden = n > 0;
+  }
+
+  // ---- virtual list --------------------------------------------------------
+  // Only the visible slice is in the DOM; 9k rows with two images each would
+  // otherwise cost ~18k image requests and a multi-second layout.
+  var H = 92, GAP = 8, OPEN_H = 640, OVERSCAN = 6;
+  var scroller = document.getElementById("scroller");
+  var offsets = [];
+
+  function layout() {
+    var y = 0;
+    offsets = new Array(view.length);
+    for (var i = 0; i < view.length; i++) {
+      offsets[i] = y;
+      y += (state.open === view[i].i ? OPEN_H : H) + GAP;
+    }
+    scroller.style.height = Math.max(y, 0) + "px";
+    render();
+  }
+  function firstVisible(top) {
+    var lo = 0, hi = offsets.length - 1, best = 0;
+    while (lo <= hi) {
+      var mid = (lo + hi) >> 1;
+      if (offsets[mid] <= top) { best = mid; lo = mid + 1; } else hi = mid - 1;
+    }
+    return best;
+  }
+
+  var pool = [];
+  function render() {
+    var sTop = scroller.offsetTop;
+    var vTop = Math.max(0, window.scrollY - sTop);
+    var vBot = vTop + window.innerHeight;
+    var a = Math.max(0, firstVisible(vTop) - OVERSCAN);
+    var b = a;
+    while (b < view.length && offsets[b] < vBot + OVERSCAN * H) b++;
+
+    var html = [];
+    for (var i = a; i < b; i++) html.push(rowHTML(view[i], offsets[i]));
+    scroller.innerHTML = html.join("");
+  }
+
+  function bktClass(r) {
+    var sb = stateBadge(r);
+    if (sb) return sb.cls === "vetoed" ? "none" : (bucketOf(r) || "repair");
+    return COUNTED[r.bkt] ? r.bkt : "none";
+  }
+  function bktLabel(r) {
+    var sb = stateBadge(r);
+    if (sb) return sb.label + (bucketOf(r) ? " \u00b7 " + bucketOf(r) : "");
+    var d0 = decisions[r.i];
+    if (d0 && typeof d0 === "object" && d0.b) return d0.b + " (yours)";
+    if (r.bkt === "repair") return "repair";
+    if (r.bkt === "assembly") return "assembly-only";
+    if (r.bkt === "upgrade") return "upgrade";
+    if (r.sx) return "scale-guarded";
+    if (!r.surl) return "no listing";
+    return "uncounted";
+  }
+
+  function thumb(url, alt, missLabel) {
+    if (!url) return '<div class="thumb miss">' + missLabel + "</div>";
+    return '<img class="thumb" loading="lazy" decoding="async" referrerpolicy="no-referrer" src="' +
+      esc(proxy(url)) + '" alt="' + esc(alt) + '">';
+  }
+
+  function rowHTML(r, y) {
+    var open = state.open === r.i;
+    var veh = [r.br, r.mdl].filter(Boolean).join(" ");
+    var sub = [];
+    if (veh) sub.push('<span class="veh">' + esc(veh) + "</span>");
+    if (r.part && r.part !== r.t) sub.push(esc(r.part));
+    var cls = bktClass(r), dec = decisionOf(r), lt = liveTot(r);
+    var sb = stateBadge(r);
+    var h = '<div class="row" style="top:' + y + "px;height:" + ((open ? OPEN_H : H) - 0) + 'px" data-i="' + esc(r.i) + '">' +
+      '<div class="rhead">' +
+        thumb(thingImg(r.ti), "Thing render", "no<br>render") +
+        thumb(listImg(r.li), "eBay listing", "no<br>listing") +
+        '<div class="rmain">' +
+          '<div class="rt">' + esc(r.t) + "</div>" +
+          '<div class="rsub"><span class="badge ' + (sb ? sb.cls : (r.sx ? "sx" : cls)) + '">' + bktLabel(r) + "</span>" +
+            sub.join(" &middot; ") + "</div>" +
+        "</div>" +
+        '<div class="rmid">' +
+          (r.p ? '<div class="l">' + usdc(r.p) + " listed</div>" : '<div>no price</div>') +
+          "<div>" + usdc(r.pc) + " to print</div>" +
+          "<div>" + num(r.dl) + " downloads</div>" +
+        "</div>" +
+        '<div class="rtot ' + cls + '"><div class="v">' + (lt ? usd(lt) : "&mdash;") + "</div>" +
+          '<div class="n">' + (lt ? usdc(Math.round((lt / Math.max(r.dl, 1)) * 100) / 100) +
+              " &times; " + num(r.dl) : (dec === "veto" ? "vetoed" : "not counted")) + "</div>" +
+        "</div>" +
+      "</div>";
+    if (open) h += detailHTML(r);
+    return h + "</div>";
+  }
+
+  function detailHTML(r) {
+    var ti = thingImg(r.ti), li = listImg(r.li);
+    var d = decisionOf(r), lt = liveTot(r);
+    var swapped = d && d.v === "accept";
+    var shownImg = swapped && d.im ? d.im : li;
+    var shownTitle = swapped ? (d.t || "(entered by hand)") : r.lt;
+    var shownP = swapped ? d.p : r.p;
+
+    return '<div class="detail">' +
+      '<div class="dgrid">' +
+        '<div class="pane"><h4>Thingiverse &mdash; what you print</h4>' +
+          (ti ? '<img loading="lazy" referrerpolicy="no-referrer" src="' + esc(proxy(ti)) + '" alt="Thing render">'
+              : '<div class="none">no render cached</div>') +
+          '<div class="cap">' + esc(r.t) + "</div></div>" +
+        '<div class="pane"><h4>' + (swapped ? "Your pick &mdash; what it replaces"
+                                            : "eBay &mdash; what it replaces") + "</h4>" +
+          (shownImg ? '<img loading="lazy" referrerpolicy="no-referrer" src="' + esc(proxy(shownImg)) + '" alt="listing">'
+                    : '<div class="none">no matched listing</div>') +
+          '<div class="cap">' + esc(shownTitle ||
+              "The strict matcher refused every candidate it was shown.") + "</div></div>" +
+      "</div>" +
+      '<div class="math">' +
+        "<div>Listing" + (shownP ? "" : " &mdash; none") + "<b>" + (shownP ? usdc(shownP) : "&mdash;") + "</b></div>" +
+        '<div class="eq">&minus;</div>' +
+        "<div>Print<b>" + usdc(r.pc) + "</b></div>" +
+        '<div class="eq">=</div>' +
+        "<div>Per print<b>" + usdc(shownP ? Math.round(Math.max(shownP - r.pc, 0) * 100) / 100 : r.spp) + "</b></div>" +
+        '<div class="eq">&times;</div>' +
+        "<div>Downloads<b>" + num(r.dl) + "</b></div>" +
+        '<div class="eq">=</div>' +
+        "<div>" + (d === "veto" ? "Vetoed" : lt ? "Counts" : "Not counted") +
+          "<b>" + usdc(lt) + "</b></div>" +
+      "</div>" +
+      actionsHTML(r, d, lt) +
+      decideHTML(r, d) +
+    "</div>";
+  }
+
+  function actionsHTML(r, d, lt) {
+    var isCounted = !!COUNTED[r.bkt];
+    var vetoed = d === "veto", kept = d === "keep" || (d && d.v === "accept");
+    var delta = lt - r.tot;
+    return '<div class="acts">' +
+      '<button class="btn keep' + (kept ? " on" : "") + '" data-act="keep">' +
+        (isCounted ? "Confirm match &#10003;" : "Mark counted &#10003;") + "</button>" +
+      '<button class="btn veto' + (vetoed ? " on" : "") + '" data-act="veto">Veto &#10005;</button>' +
+      (d ? '<button class="btn" data-act="undo">Undo</button>' : "") +
+      '<a class="btn go" href="' + esc(r.href) + '">Open on the ' + esc(r.br || "brand") + " page &rarr;</a>" +
+      '<a class="btn" href="' + esc(r.url) + '" target="_blank" rel="noopener">Thing &#8599;</a>' +
+      (r.surl ? '<a class="btn" href="' + esc(r.surl) + '" target="_blank" rel="noopener">Listing &#8599;</a>' : "") +
+      (delta ? '<span class="verdict">' + (delta > 0 ? "+" : "&minus;") +
+        "<b>" + usd(Math.abs(delta)).slice(1) + "</b> vs the model</span>" : "") +
+    "</div>";
+  }
+
+  // The pool + the by-hand form: the whole point of putting editing on this
+  // page. Only ~5% of uncounted rows have a captured pool, so the manual form
+  // is the primary path, not the fallback — it renders open when there is no
+  // pool to choose from.
+  function decideHTML(r, d) {
+    var chosen = d && d.v === "accept" ? d.u : (r.surl || "");
+    var pool = poolOf(r);
+    var waiting = r.hp && !pool.length;
+    var search = r.q
+      ? '<a href="https://www.ebay.com/sch/i.html?_nkw=' + encodeURIComponent(r.q) +
+        '" target="_blank" rel="noopener">search eBay for &ldquo;' + esc(r.q) + '&rdquo; &#8599;</a>'
+      : "";
+    var body;
+    if (pool.length) {
+      body = '<div class="pool">' + pool.map(function (c) {
+        var np = contrib(r, c.p);
+        return '<div class="cand' + (c.u === chosen ? " chosen" : "") + '">' +
+          (c.im ? '<img loading="lazy" referrerpolicy="no-referrer" src="' + esc(proxy(c.im)) + '" alt="">'
+                : '<div class="none" style="height:84px"></div>') +
+          '<div class="cp">' + usdc(c.p) +
+            (c.s ? ' <small>+' + usdc(c.s).slice(1) + " ship</small>" : "") + "</div>" +
+          '<div class="ct">' + esc(c.t) + "</div>" +
+          '<div class="cnew">&rarr; ' + usd(np) + "</div>" +
+          '<button class="pick" type="button" data-cand="' + esc(c.u) + '">Same part &#10003;</button>' +
+        "</div>";
+      }).join("") + "</div>";
+    } else if (waiting) {
+      body = '<div class="nopool">Loading the candidate pool&hellip;</div>';
+    } else {
+      body = '<div class="nopool">' +
+        (r.err ? "This row errored &mdash; there is nothing to match, veto it."
+               : "No candidate pool was captured for this row (<code>capture_candidates.py</code> " +
+                 "has only reached 247 of the 4,862 uncounted rows). Search eBay and paste the " +
+                 "listing below.") + "</div>";
+    }
+    return '<div class="decide">' +
+      '<div class="lab"><span>' + (pool.length
+        ? "Other matches &mdash; the pool the matcher chose from" + (r.at ? " &middot; captured " + esc(r.at) : "")
+        : "Find the match yourself") + "</span>" + search + "</div>" +
+      body +
+      '<div class="manual"><div class="mrow">' +
+        '<input class="mu" type="url" placeholder="https://www.ebay.com/itm/… (paste the listing)" aria-label="Listing URL">' +
+        '<input class="mp" type="number" min="0" step="0.01" placeholder="item $" aria-label="Item price USD">' +
+        '<input class="ms" type="number" min="0" step="0.01" placeholder="ship $" aria-label="Shipping USD">' +
+        '<button class="pick" type="button" data-act="manual">Price it at this &#10003;</button>' +
+      "</div>" +
+      bucketHTML(r, d) +
+      '<p class="mhint">Shipping is recorded but kept out of the headline, exactly as the pipeline does. ' +
+        "The row re-prices at " + usdc(0).replace("0.00", "(price &minus; " + usdc(r.pc).slice(1) + ") &times; " + num(r.dl)) +
+      ".</p></div>" +
+    "</div>";
+  }
+
+  // A row with no candidate pool often has no usable classification either, and
+  // apply_review.py used to refuse those accepts outright — "no bucket to bank
+  // into". Naming the bucket by hand is what makes such a row rescuable, and a
+  // human call beats the classifier's where they disagree.
+  var BUCKETS = [
+    {k: "repair",   t: "Repair"},
+    {k: "assembly", t: "Assembly-only"},
+    {k: "upgrade",  t: "Upgrade"}
+  ];
+  // Mirrors apply_review.py's bucket_for(): an explicit human bucket wins, then
+  // the row's own bucket, then what its classification implies. Only a row that
+  // resolves to nothing here actually needs a manual pick.
+  function bucketOf(r) {
+    var d = decisions[r.i];
+    if (d && typeof d === "object" && d.b) return d.b;
+    if (COUNTED[r.bkt]) return r.bkt;
+    if (r.cls === "accessory") return "upgrade";
+    if (r.cls === "spare_part") return r.asm ? "assembly" : "repair";
+    return "";
+  }
+  function bucketHTML(r, d) {
+    var cur = bucketOf(r);
+    var overridden = d && typeof d === "object" && d.b;
+    return '<div class="bucketpick"><span class="bl">Counts as</span>' +
+      BUCKETS.map(function (b) {
+        return '<button class="bk ' + b.k + '" type="button" data-bucket="' + b.k +
+          '" aria-pressed="' + (cur === b.k) + '">' + b.t + "</button>";
+      }).join("") +
+      (overridden ? '<button class="bk" type="button" data-bucket="">clear</button>' : "") +
+      '<span class="bkwhy">' +
+        (overridden
+          ? "Your call, not the classifier's &mdash; this is the bucket apply_review.py will bank into."
+          : (COUNTED[r.bkt]
+              ? "From the pipeline. Override it if the model got the bucket wrong."
+              : 'Classified <code>' + esc(r.cls || "nothing") + '</code>' +
+                (cur
+                  ? ", so a rescue banks into " + esc(cur) + " by default."
+                  : " &mdash; that maps to no bucket, so pick one or the rescue cannot be applied."))) +
+      "</span></div>";
+  }
+
+  // ---- events --------------------------------------------------------------
+  function rowById(id) {
+    for (var i = 0; i < view.length; i++) if (view[i].i === id) return view[i];
+    return null;
+  }
+
+  scroller.addEventListener("click", function (e) {
+    if (e.target.closest("a")) return;
+    var row = e.target.closest(".row");
+    if (!row) return;
+    var id = row.getAttribute("data-i"), r = rowById(id);
+    if (!r) return;
+
+    // a click inside the detail acts on the row rather than collapsing it
+    var actBtn = e.target.closest("[data-act]");
+    if (actBtn) {
+      var a = actBtn.dataset.act;
+      if (a === "keep") decide(r, decisionOf(r) === "keep" ? null : "keep");
+      else if (a === "veto") decide(r, decisionOf(r) === "veto" ? null : "veto");
+      else if (a === "undo") decide(r, null);
+      else if (a === "manual") {
+        var mf = actBtn.closest(".mrow");
+        var u = (mf.querySelector(".mu").value || "").trim();
+        var pr = parseFloat(mf.querySelector(".mp").value);
+        var sh = parseFloat(mf.querySelector(".ms").value) || 0;
+        if (!u || !(pr > 0)) { setSave("err", "need a URL and an item price"); return; }
+        if (!bankable()) return;
+        decide(r, {v: "accept", u: u, p: Math.round(pr * 100) / 100,
+                   s: Math.round(sh * 100) / 100, t: "(entered by hand)", im: "",
+                   src: "manual", ts: new Date().toISOString()});
+      }
+      return;
+    }
+    var bk = e.target.closest("[data-bucket]");
+    if (bk) {
+      var want = bk.getAttribute("data-bucket");
+      var cur = decisions[r.i];
+      var next;
+      if (!want) {                                   // clear the override
+        if (cur && typeof cur === "object") { next = {}; 
+          Object.keys(cur).forEach(function (k) { if (k !== "b") next[k] = cur[k]; });
+          if (next.v === "keep" && Object.keys(next).length === 1) next = "keep";
+        } else next = cur || null;
+      } else if (cur && typeof cur === "object") {
+        next = {}; Object.keys(cur).forEach(function (k) { next[k] = cur[k]; });
+        next.b = want;
+      } else {
+        // no decision yet: naming the bucket is itself a call, recorded as a keep
+        next = {v: cur === "veto" ? "veto" : "keep", b: want, ts: new Date().toISOString()};
+      }
+      decide(r, next);
+      return;
+    }
+    function bankable() {
+      if (bucketOf(r)) return true;
+      setSave("err", "pick Repair / Assembly-only / Upgrade first — this row has no bucket");
+      return false;
+    }
+    var pick = e.target.closest("[data-cand]");
+    if (pick) {
+      if (!bankable()) return;
+      var u2 = pick.getAttribute("data-cand"), c = null;
+      poolOf(r).forEach(function (x) { if (x.u === u2) c = x; });
+      if (c) decide(r, {v: "accept", u: c.u, p: c.p, s: c.s || 0, t: c.t || "",
+                        im: c.im || "", src: "pool", ts: new Date().toISOString()});
+      return;
+    }
+    if (e.target.closest(".decide, .manual")) return;  // typing in the form
+
+    var opening = state.open !== id;
+    state.open = opening ? id : null;
+    layout();
+    // pull this brand's decisions the first time one of its rows is opened
+    if (opening) {
+      var slug = slugOf(r), jobs = [];
+      if (slug && loaded[slug] !== true) jobs.push(loadBrand(slug));
+      if (r.hp && !poolOf(r).length) jobs.push(loadPool(r));
+      if (jobs.length) Promise.all(jobs).then(function () { layout(); });
+    }
+  });
+  document.getElementById("chips").addEventListener("click", function (e) {
+    var b = e.target.closest(".chip");
+    if (!b) return;
+    state.f = b.getAttribute("data-f");
+    [].forEach.call(this.querySelectorAll(".chip"), function (c) {
+      c.setAttribute("aria-pressed", c === b);
+    });
+    window.scrollTo(0, 0);
+    applyFilters();
+  });
+  scroller.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && e.target.closest(".mrow")) {
+      e.preventDefault();
+      var b = e.target.closest(".mrow").querySelector('[data-act="manual"]');
+      if (b) b.click();
+    }
+  });
+
+  var qt;
+  document.getElementById("q").addEventListener("input", function (e) {
+    clearTimeout(qt);
+    var v = e.target.value;
+    qt = setTimeout(function () { state.q = v; window.scrollTo(0, 0); applyFilters(); }, 130);
+  });
+  document.getElementById("sort").addEventListener("change", function (e) {
+    state.sort = e.target.value; window.scrollTo(0, 0); applyFilters();
+  });
+
+  // ---- export --------------------------------------------------------------
+  // CSV is the current view, in view order, with the decision folded in, so what
+  // downloads is what is on screen. The JSON is the decisions map in the shape
+  // apply_review.py already consumes (it reads `.decisions`).
+  function download(name, text, mime) {
+    var b = new Blob([text], {type: mime});
+    var u = URL.createObjectURL(b), a = document.createElement("a");
+    a.href = u; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(u); }, 1000);
+  }
+  function csvCell(v) {
+    v = v == null ? "" : String(v);
+    return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+  }
+  function decisionLabel(r) {
+    var d = decisionOf(r);
+    if (d === "veto") return "vetoed";
+    if (d === "keep") return "confirmed";
+    if (d && d.v === "accept") return COUNTED[r.bkt] ? "swapped" : "rescued";
+    return "";
+  }
+  function exportCSV() {
+    var cols = ["thing_id", "title", "brand", "model", "part", "bucket", "classification",
+                "listing_price_usd", "print_cost_usd", "savings_per_print_usd", "downloads",
+                "model_total_usd", "live_total_usd", "decision", "review_bucket", "decided_listing_url",
+                "decided_price_usd", "decided_shipping_usd", "thing_url", "listing_url", "part_query"];
+    var out = [cols.join(",")];
+    view.forEach(function (r) {
+      var d = decisionOf(r), acc = d && d.v === "accept" ? d : null;
+      out.push([r.i, r.t, r.br || "", r.mdl || "", r.part || "", r.bkt || "uncounted", r.cls || "",
+                r.p || 0, r.pc || 0, r.spp || 0, r.dl || 0,
+                r.tot || 0, liveTot(r), decisionLabel(r), bucketOf(r),
+                acc ? acc.u : "", acc ? acc.p : "", acc ? (acc.s || 0) : "",
+                r.url || "", r.surl || "", r.q || ""].map(csvCell).join(","));
+    });
+    var tag = state.f === "all" && !state.q ? "all" : (state.f + (state.q ? "-search" : ""));
+    download("cars-9k-" + tag + "-" + new Date().toISOString().slice(0, 10) + ".csv",
+             out.join("\n"), "text/csv;charset=utf-8");
+    setSave("ok", num(view.length) + " rows exported");
+  }
+  function exportDecisions() {
+    var n = Object.keys(decisions).length;
+    if (!n) { setSave("err", "no decisions to export yet"); return; }
+    download("cars-9k-decisions-" + new Date().toISOString().slice(0, 10) + ".json",
+      JSON.stringify({exported_at: new Date().toISOString(), source: "cars/all.html",
+                      n: n, decisions: decisions}, null, 2),
+      "application/json");
+    setSave("ok", num(n) + " decisions exported");
+  }
+  document.getElementById("x-csv").addEventListener("click", exportCSV);
+  document.getElementById("x-json").addEventListener("click", exportDecisions);
+
+  var ticking = false;
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function () { render(); ticking = false; });
+  }
+  window.addEventListener("scroll", onScroll, {passive: true});
+  window.addEventListener("resize", onScroll);
+
+  // deep link: all.html#t<id> opens that row
+  var want = (location.hash.match(/^#t(\d+)$/) || [])[1];
+  applyFilters();
+  if (want) {
+    var idx = view.findIndex(function (r) { return r.i === want; });
+    if (idx >= 0) {
+      state.open = want; layout();
+      window.scrollTo(0, scroller.offsetTop + offsets[idx] - 90);
+    }
+  }
+})();
+</script>
+</body>
+</html>

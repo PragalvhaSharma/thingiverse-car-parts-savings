@@ -1,0 +1,11 @@
+{
+  "redirects": [
+    { "source": "/", "destination": "/cars/all.html", "permanent": false }
+  ],
+  "headers": [
+    {
+      "source": "/api/state",
+      "headers": [{ "key": "Cache-Control", "value": "no-store" }]
+    }
+  ]
+}

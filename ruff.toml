@@ -1,0 +1,9 @@
+# The rules "ruff check" holds this code to. They look for bugs: undefined or
+# unused names, syntax errors, bugbear's likely mistakes, pylint errors, files
+# opened outside a with block, subprocess.run without check=, two strings run
+# together on one line, and scripts whose shebang and file mode disagree. Style
+# rules are off; the code uses %-formatting throughout.
+target-version = "py310"
+
+[lint]
+select = ["F", "E9", "B", "PLE", "PLW1510", "SIM115", "ISC001", "EXE", "PIE", "YTT"]

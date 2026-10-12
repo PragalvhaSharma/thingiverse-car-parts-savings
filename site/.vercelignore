@@ -1,0 +1,15 @@
+# A .vercelignore REPLACES .gitignore for deploys, so it must be complete.
+node_modules
+.vercel
+
+# Secrets: BLOB_READ_WRITE_TOKEN / VERCEL_OIDC_TOKEN live here. Runtime env comes
+# from the Vercel project settings, never from an uploaded file.
+.env
+.env.*
+.env*.local
+
+# Docs don't need to be publicly served.
+README.md
+
+# deploy logs are local scratch, not site content
+deploy.log

@@ -1,0 +1,1434 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mazda — printable parts vs. eBay</title>
+<meta name="description" content="Every row as a scannable list: the printed part next to the eBay listing. Open a row for the full detail, keep or veto, and every decision is saved for all reviewers.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#128269;</text></svg>">
+<style>
+  :root {
+    --ivory:  #FAF9F5;
+    --paper:  #FFFFFF;
+    --slate:  #141413;
+    --clay:   #D97757;
+    --clay-d: #B85C3E;
+    --oat:    #E3DACC;
+    --olive:  #788C5D;
+    --g100:   #F0EEE6;
+    --g200:   #E6E3DA;
+    --g300:   #D1CFC5;
+    --g500:   #87867F;
+    --g700:   #3D3D3A;
+    --repair: #B85C3E;
+    --upgrade:#2a78d6;
+    --assembly:#788C5D;
+    --keep:   #2e7d4f;
+    --veto:   #B85C3E;
+
+    --serif: ui-serif, Georgia, "Times New Roman", Times, serif;
+    --sans:  system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono:  ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+
+    --border: 1.5px solid var(--g300);
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--ivory);
+    color: var(--slate);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible { outline: 2px solid var(--clay); outline-offset: 3px; }
+  a { color: var(--clay-d); }
+
+  .top {
+    position: sticky; top: 0; z-index: 20;
+    background: var(--ivory);
+    border-bottom: var(--border);
+    padding: 12px 22px 12px;
+  }
+  .top-row {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  }
+  .brand {
+    font-family: var(--serif); font-size: 18px; font-weight: 500;
+    letter-spacing: -0.02em; margin-right: auto;
+  }
+  .brand em { font-style: italic; color: var(--clay); }
+  /* per-brand pages: a back-link above the page title, both in the left slot */
+  .brandwrap { margin-right: auto; display: flex; flex-direction: column; gap: 1px; }
+  .brandwrap .brand { margin-right: 0; }
+  .up {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .09em;
+    text-transform: uppercase; color: var(--g500); text-decoration: none;
+    display: inline-flex; align-items: center; gap: 5px; width: fit-content;
+  }
+  .up:hover { color: var(--clay); }
+  .up .arrow { font-size: 12px; line-height: 1; }
+  .veh { color: var(--g700); }
+  .qty {
+    font-family: var(--mono); font-size: 9.5px; letter-spacing: .04em;
+    color: var(--veto); background: color-mix(in srgb, var(--veto) 9%, transparent);
+    border-radius: 3px; padding: 1px 5px; margin-top: 3px; display: inline-block;
+    white-space: nowrap; cursor: help;
+  }
+  .lrow.flash { animation: flash 1.6s ease-out; }
+  @keyframes flash {
+    0%, 55% { background: color-mix(in srgb, var(--clay) 16%, transparent); }
+    100% { background: transparent; }
+  }
+  .brandwrap .sub {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .06em;
+    color: var(--g500); text-transform: uppercase;
+  }
+  .stat {
+    font-variant-numeric: tabular-nums;
+    min-width: 7.5rem;
+  }
+  .stat .k {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--g500);
+  }
+  .stat .v { font-family: var(--serif); font-size: 20px; font-weight: 500; line-height: 1.15; }
+  .stat.repair .v { color: var(--repair); }
+  .stat.upgrade .v { color: var(--upgrade); }
+  .stat.assembly .v { color: var(--assembly); }
+  .save {
+    font-family: var(--mono); font-size: 11px; color: var(--g500);
+    padding: 5px 10px; border: var(--border); border-radius: 999px;
+    background: var(--paper); cursor: pointer;
+  }
+  .save:hover { border-color: var(--g500); }
+  .save.ok { color: var(--keep); border-color: #c5ddcc; background: #eef6f0; }
+  .save.err { color: var(--veto); border-color: #e8cfc4; background: #f8eee9; }
+  .save.wait { color: var(--g700); }
+
+  .banner {
+    margin-top: 10px; padding: 9px 12px; border-radius: 8px;
+    background: #F5E7DF; color: #8A4526; font-size: 13px;
+  }
+  .banner[hidden] { display: none; }
+  .banner code { font-family: var(--mono); font-size: 12px; }
+
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip {
+    font-size: 12.5px; padding: 6px 12px; border: var(--border); border-radius: 999px;
+    background: var(--paper); color: var(--g700); cursor: pointer;
+  }
+  .chip[aria-pressed="true"] { background: var(--slate); color: var(--ivory); border-color: var(--slate); }
+  .chip.mode[aria-pressed="true"] { background: var(--clay-d); border-color: var(--clay-d); color: #fff; }
+  .chip .n { font-family: var(--mono); font-size: 10px; opacity: .7; margin-left: 4px; }
+  input[type="search"] {
+    flex: 1 1 200px; min-width: 160px; font-family: var(--sans); font-size: 13px;
+    padding: 7px 12px; border: var(--border); border-radius: 999px;
+    background: var(--paper); color: var(--slate);
+  }
+  input[type="search"]::placeholder { color: var(--g500); }
+
+  .progress {
+    margin-top: 10px; height: 6px; background: var(--g200); border-radius: 99px; overflow: hidden;
+  }
+  .progress > span { display: block; height: 100%; background: var(--clay); width: 0%; }
+
+  .stage { max-width: 1180px; margin: 0 auto; padding: 14px 22px 80px; }
+  .countline { font-family: var(--mono); font-size: 11.5px; color: var(--g500); margin: 2px 0 10px; }
+
+  /* ---------------- the list ---------------- */
+  .list {
+    background: var(--paper); border: var(--border); border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .lrow {
+    display: grid;
+    grid-template-columns: 148px minmax(0, 1fr) auto auto;
+    gap: 14px; align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--g200);
+    cursor: pointer;
+  }
+  .lrow:hover { background: var(--ivory); }
+  .lrow.open { background: var(--g100); }
+  .lrow.st-kept { box-shadow: inset 3px 0 0 var(--keep); }
+  .lrow.st-vetoed { box-shadow: inset 3px 0 0 var(--veto); }
+  .lrow.st-vetoed .lnum, .lrow.st-vetoed .lt { color: var(--g500); }
+  .lrow.st-vetoed .lnum b { text-decoration: line-through; text-decoration-color: var(--veto); }
+
+  .lthumbs { display: flex; gap: 6px; align-items: center; }
+  .lthumbs img, .lthumbs .lph {
+    width: 64px; height: 64px; object-fit: cover; border-radius: 8px;
+    border: 1px solid var(--g300); background: var(--g100); display: block; flex: none;
+  }
+  .lthumbs .lph {
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 9.5px; color: var(--g500);
+    text-align: center; line-height: 1.3; padding: 4px;
+  }
+  .lmain { min-width: 0; }
+  .lt { font-weight: 550; font-size: 14px; line-height: 1.3; overflow-wrap: anywhere; }
+  .lsub {
+    font-size: 12px; color: var(--g500); margin-top: 2px;
+    display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .lnum {
+    text-align: right; font-size: 12px; color: var(--g700);
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .lnum b { font-size: 14px; }
+  .lnum .bdot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; vertical-align: 1px; }
+  .lnum .bdot.repair { background: var(--repair); }
+  .lnum .bdot.upgrade { background: var(--upgrade); }
+  .lnum .bdot.assembly { background: var(--assembly); }
+  .lact { display: flex; gap: 6px; align-items: center; flex-wrap: nowrap; }
+
+  .badge {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .05em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 999px; white-space: nowrap;
+  }
+  .badge.kept { background: #eef6f0; color: var(--keep); }
+  .badge.vetoed { background: #f8eee9; color: var(--veto); }
+  .badge.matched { background: #eef6f0; color: var(--keep); }
+  .badge.auto {
+    background: #eef6f0; color: var(--keep);
+    border: 1px dashed rgba(46, 125, 79, .45);
+  }
+
+  button.mini {
+    font-family: var(--sans); font-size: 12.5px; font-weight: 600;
+    padding: 7px 12px; border-radius: 8px; border: 1.5px solid transparent;
+    cursor: pointer; white-space: nowrap;
+  }
+  button.mini.keep { background: var(--keep); color: #fff; }
+  button.mini.veto { background: var(--veto); color: #fff; }
+  button.mini.ghost { background: var(--paper); color: var(--g700); border-color: var(--g300); font-weight: 500; }
+  button.mini:hover { filter: brightness(1.06); }
+  button.mini.ghost:hover { filter: none; border-color: var(--g500); }
+  .chev { font-family: var(--mono); color: var(--g500); font-size: 12px; width: 18px; text-align: center; }
+  .lrow.open .chev { color: var(--slate); }
+
+  @media (max-width: 760px) {
+    .lrow { grid-template-columns: 74px minmax(0, 1fr); grid-auto-rows: auto; }
+    .lthumbs { flex-direction: column; }
+    .lnum { grid-column: 2; text-align: left; }
+    .lact { grid-column: 2; }
+  }
+
+  /* ---------------- expanded detail ---------------- */
+  .ldetail { border-bottom: 1px solid var(--g200); background: var(--ivory); padding: 16px 18px 18px; cursor: default; }
+  .ldetail .sub { color: var(--g700); font-size: 13px; margin: 0 0 12px; }
+  .ldetail .sub b { font-variant-numeric: tabular-nums; }
+
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 800px) { .pair { grid-template-columns: 1fr; } }
+  .pane {
+    background: var(--paper); border: var(--border); border-radius: var(--radius);
+    overflow: hidden; display: flex; flex-direction: column;
+  }
+  .pane .lab {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--g500);
+    padding: 10px 14px 8px; border-bottom: 1px solid var(--g200);
+    display: flex; justify-content: space-between; gap: 8px;
+  }
+  .pane .frame {
+    flex: 1; min-height: 300px; background: var(--g100);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pane .frame img {
+    display: block; width: 100%; height: 320px; object-fit: contain; background: var(--g100);
+  }
+  .pane .empty {
+    color: var(--g500); font-size: 13.5px; text-align: center; padding: 24px;
+  }
+  .pane .cap {
+    padding: 10px 14px 12px; font-size: 12.5px; color: var(--g700);
+    border-top: 1px solid var(--g200);
+  }
+  .pane .cap code { font-family: var(--mono); font-size: 11.5px; background: var(--g100); padding: 1px 5px; border-radius: 4px; }
+
+  /* candidate pool inside the rescue detail */
+  .cand-list {
+    flex: 1; min-height: 300px; max-height: 420px; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 1px; background: var(--g200);
+  }
+  .cand {
+    display: grid; grid-template-columns: 18px 56px minmax(0,1fr) auto; gap: 10px;
+    align-items: center; background: var(--paper); padding: 8px 12px;
+    border: 0; font: inherit; text-align: left; cursor: pointer; width: 100%;
+  }
+  .cand:hover { background: var(--ivory); }
+  .cand.refused { box-shadow: inset 3px 0 0 var(--veto); }
+  .cand.modelpick { box-shadow: inset 3px 0 0 var(--g500); }
+  .cand.picked { background: #eef6f0; box-shadow: inset 3px 0 0 var(--keep); }
+  .cand .ci { font-family: var(--mono); font-size: 10.5px; color: var(--g500); text-align: right; }
+  .cand img { width: 56px; height: 56px; object-fit: cover; border-radius: 6px; border: 1px solid var(--g300); background: var(--g100); display: block; }
+  .cand .noimg { width: 56px; height: 56px; border-radius: 6px; border: 1px dashed var(--g300); background: var(--g100); }
+  .cand .cb { min-width: 0; }
+  .cand .ct { font-size: 12.5px; font-weight: 550; line-height: 1.3; color: var(--slate); text-decoration: none; display: block; overflow-wrap: anywhere; }
+  a.ct:hover { color: var(--clay-d); text-decoration: underline; }
+  .cand .cm { font-family: var(--mono); font-size: 10.5px; color: var(--g500); }
+  .cand .cm .refnote { color: var(--veto); }
+  .cand .cm .picknote { color: var(--g700); }
+  .cand .pick {
+    font-size: 12px; font-weight: 600; padding: 6px 11px; border-radius: 8px;
+    border: 1.5px solid var(--keep); color: var(--keep); background: var(--paper);
+    cursor: pointer; white-space: nowrap;
+  }
+  .cand .pick:hover { background: var(--keep); color: #fff; }
+  @media (max-width: 560px) {
+    .cand { grid-template-columns: 14px 48px minmax(0,1fr); }
+    .cand .pick { grid-column: 3; justify-self: start; }
+    .cand img, .cand .noimg { width: 48px; height: 48px; }
+  }
+
+  .manual { padding: 9px 14px 12px; border-top: 1px solid var(--g200); font-size: 12.5px; }
+  .manual summary { cursor: pointer; color: var(--g500); }
+  .manual summary:hover { color: var(--clay-d); }
+  .manual .mf { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .manual input {
+    font: inherit; font-size: 12.5px; padding: 6px 9px; border: var(--border);
+    border-radius: 8px; background: var(--paper); color: var(--slate); min-width: 0;
+  }
+  .manual .mu { flex: 2 1 200px; }
+  .manual .mp, .manual .ms { flex: 0 1 96px; }
+  .manual .pick {
+    font-size: 12px; font-weight: 600; padding: 6px 11px; border-radius: 8px;
+    border: 1.5px solid var(--keep); color: var(--keep); background: var(--paper); cursor: pointer;
+  }
+  .manual .pick:hover { background: var(--keep); color: #fff; }
+
+  .dactions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 14px; }
+  .links { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; }
+  .links a {
+    font-size: 12.5px; padding: 6px 12px; border: var(--border); border-radius: 999px;
+    background: var(--paper); text-decoration: none; color: var(--slate);
+  }
+  .links a:hover { border-color: var(--clay); color: var(--clay-d); }
+  .why { font-size: 12.5px; color: var(--g700); margin-top: 12px; max-width: 90ch; }
+  .why b { font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--g500); font-weight: 400; display: block; margin-bottom: 2px; }
+
+  .done {
+    background: var(--paper); border: var(--border); border-radius: var(--radius);
+    padding: 36px 28px; text-align: center;
+  }
+  .done h2 { font-family: var(--serif); font-weight: 500; font-size: 28px; margin: 0 0 8px; }
+  .done p { color: var(--g700); margin: 0 0 18px; }
+
+  .exportbtn {
+    font-family: var(--sans); font-size: 12.5px; font-weight: 600; padding: 7px 14px;
+    border-radius: 999px; border: var(--border); background: var(--paper);
+    color: var(--slate); cursor: pointer; white-space: nowrap;
+  }
+  .exportbtn:hover { border-color: var(--clay); color: var(--clay-d); }
+
+  .statsbox {
+    background: var(--paper); border: var(--border); border-radius: var(--radius);
+    margin: 0 0 14px;
+  }
+  .statsbox summary {
+    list-style: none; cursor: pointer; display: flex; gap: 14px; align-items: baseline;
+    flex-wrap: wrap; padding: 12px 18px;
+  }
+  .statsbox summary::-webkit-details-marker { display: none; }
+  .statsbox summary::after { content: "▸"; margin-left: auto; color: var(--g500); }
+  .statsbox[open] summary::after { content: "▾"; }
+  .statsbox .stitle {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--g500);
+  }
+  .statsbox .sdigest { font-size: 13px; color: var(--g700); }
+  .statsbox .sdigest b { font-family: var(--serif); font-size: 15.5px; color: var(--slate); font-weight: 550; }
+  .sgrid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 0 32px; padding: 2px 18px 16px; border-top: 1px dashed var(--g300);
+  }
+  .sgroup h3 {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--g500); font-weight: 400; margin: 12px 0 5px;
+  }
+  .srow { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; padding: 3px 0; }
+  .srow .sk { color: var(--g700); white-space: nowrap; }
+  .srow .sv { font-family: var(--serif); font-size: 14.5px; text-align: right; }
+  .how { padding: 2px 18px 16px; border-top: 1px dashed var(--g300); max-width: 100ch; }
+  .how p { font-size: 13.5px; color: var(--g700); line-height: 1.55; margin: 11px 0 0; }
+  .how b { color: var(--slate); }
+  .how code {
+    font-family: var(--mono); font-size: 12px; background: var(--g100);
+    padding: 1px 5px; border-radius: 4px;
+  }
+  .how .hrepair { color: var(--repair); font-weight: 600; }
+  .how .hupgrade { color: var(--upgrade); font-weight: 600; }
+  .srow .sv small { font-family: var(--sans); font-size: 11px; color: var(--g500); white-space: nowrap; }
+  .srow .sv.pos { color: var(--keep); }
+  .srow .sv.neg { color: var(--veto); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+  <header class="top">
+    <div class="top-row">
+      <div class="brandwrap"><a class="up" href="../index.html"><span class="arrow">&larr;</span>All brands</a><div class="brand">Mazda <em>parts</em></div><div class="sub">110 things · 18 models</div></div>
+      <div class="stat repair"><div class="k">Repair in</div><div class="v" id="n-repair">-</div></div>
+      <div class="stat assembly"><div class="k">Assembly in</div><div class="v" id="n-assembly">-</div></div>
+      <div class="stat upgrade"><div class="k">Upgrade in</div><div class="v" id="n-upgrade">-</div></div>
+      <div class="stat"><div class="k">Recovered</div><div class="v" id="n-recovered">-</div></div>
+      <div class="stat"><div class="k">Pending</div><div class="v" id="n-pending">-</div></div>
+      <button class="exportbtn" id="export-html" type="button"
+        title="Download a standalone HTML report of the review — the version you send someone">Report ⇩</button>
+      <button class="exportbtn" id="export" type="button"
+        title="Download decisions + statistics as JSON — apply_review.py takes this file directly">JSON ⇩</button>
+      <button class="save wait" id="save" type="button"
+        title="Decisions save on every click; press to force a full sync">Loading…</button>
+    </div>
+    <div class="banner" id="blob-banner" hidden>
+      Keep/Veto is only on this browser until you add a Blob store:
+      Vercel project → Storage → Create Blob → connect this project → redeploy.
+      After that, every click is saved on the server for all reviewers.
+    </div>
+    <div class="controls">
+      <div class="chips" role="tablist" aria-label="Scope">
+        <button class="chip mode" type="button" data-s="all" aria-pressed="true">All things <span class="n" id="s-all">0</span></button>
+        <button class="chip mode" type="button" data-s="counted" aria-pressed="false">Counted <span class="n" id="s-counted">0</span></button>
+        <button class="chip mode" type="button" data-s="uncounted" aria-pressed="false">Uncounted <span class="n" id="s-uncounted">0</span></button>
+      </div>
+      <div class="chips" role="tablist" aria-label="Filter">
+        <button class="chip" type="button" data-f="all" aria-pressed="true">All <span class="n" id="c-all">0</span></button>
+        <button class="chip" type="button" data-f="pending" aria-pressed="false">Pending <span class="n" id="c-pending">0</span></button>
+        <button class="chip" type="button" data-f="kept" aria-pressed="false">Kept / Matched <span class="n" id="c-kept">0</span></button>
+        <button class="chip" type="button" data-f="vetoed" aria-pressed="false">Vetoed <span class="n" id="c-vetoed">0</span></button>
+      </div>
+      <input type="search" id="q" placeholder="Search title, part, creator, id…" aria-label="Search rows">
+    </div>
+    <div class="progress" aria-hidden="true"><span id="bar"></span></div>
+  </header>
+
+  <main class="stage">
+    <details class="statsbox" id="statsbox" open>
+      <summary>
+        <span class="stitle">Statistics</span>
+        <span class="sdigest" id="sdigest">–</span>
+      </summary>
+      <div class="sgrid" id="sgrid"></div>
+    </details>
+    <details class="statsbox" id="howbox">
+      <summary>
+        <span class="stitle">How this works</span>
+        <span class="sdigest">from a Thing to a dollar figure, and what your clicks do</span>
+      </summary>
+      <div class="how">
+        <p><b>The pipeline.</b> Each row is a printable car part published on Thingiverse.
+        The pipeline turned it into a part query, searched eBay&rsquo;s <em>sold</em> listings,
+        and a strict two-stage matcher (candidate matching, then a photos-both-sides judge)
+        kept a listing only when it shows the same physical part — that pass counted
+        <b>56 of 110</b> rows. A counted row&rsquo;s savings are
+        <code>(item price − print cost) × downloads</code>, clamped at zero, banked as
+        <span class="hrepair">repair</span> (spare parts) or <span class="hupgrade">upgrade</span>
+        (accessories) by its classification. Prices are the item only — no shipping
+        (the dashboard reports the with-shipping sensitivity separately).</p>
+        <p><b>Counted rows — auto-confirmed.</b> The strict matcher already verified these, so
+        they arrive confirmed and need nothing from you. <b>Veto ✕</b> kicks one out and its dollars leave the totals
+        immediately. Expand the row to see the printed part next to the listing photo,
+        <b>Confirm</b> it as human-verified, or <b>swap</b> the model&rsquo;s listing for another
+        candidate (or one entered by hand) — the row re-prices at your pick.</p>
+        <p><b>Uncounted rows.</b> The strict pass refused these, so they currently add $0.
+        The detail shows the candidate pool the matcher saw — click <b>Same part ✓</b> on the
+        listing that really is this part to price the row with it, or <b>Veto</b> if nothing
+        sold matches. &ldquo;Enter it by hand&rdquo; covers listings found elsewhere on eBay.</p>
+        <p><b>Bookkeeping.</b> Every click saves to the server, so all reviewers see the same
+        state; <b>Z</b> undoes. <b>JSON ⇩</b> downloads the decisions and the statistics, and
+        <code>apply_review.py</code> folds them into a reviewed CSV (never touching the
+        original) that the dashboard rebuilds from. <b>Report ⇩</b> downloads a standalone
+        HTML write-up of the same review — totals, what review changed, and every row you
+        moved with both photos — meant for sending to someone rather than for the pipeline. Photos load through an image proxy —
+        Thingiverse blocks hotlinks, so a blank thumbnail is the listing&rsquo;s problem, not a
+        wrong match.</p>
+      </div>
+    </details>
+    <div class="countline" id="countline"></div>
+    <div id="list"></div>
+  </main>
+
+<script id="payload" type="application/json"> /* PAYLOAD payload */ </script>
+<script>
+(function () {
+  var DATA = JSON.parse(document.getElementById("payload").textContent);
+  var ROWS = DATA.rows;
+  var M = DATA.meta;
+  // One blob per page: 78 brand pages share thing-id space, so an unkeyed
+  // /api/state would collide them into one 2 MB map that every click rewrites.
+  var STATE_URL = "/api/state?key=mazda";
+  var KEY = "tv-review-decisions-v1-mazda";
+  var byId = {};
+  ROWS.forEach(function (r) { byId[r.id] = r; });
+
+  // id -> "keep" | "veto" | {v:"accept", u, p, s, t, im, src, ts}
+  var decisions = {};
+  var scope = "all";     // all | counted | uncounted
+  var filter = "all";
+  var q = "";
+  var open = {};         // id -> true while the detail is expanded
+  var undoStack = [];
+  var saveMode = "local"; // local | server
+
+  function usd(n) {
+    n = Math.round(n);
+    return "$" + n.toLocaleString("en-US");
+  }
+  function esc(s) {
+    return String(s || "").replace(/[&<>"']/g, function (c) {
+      return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c];
+    });
+  }
+  function proxied(url) {
+    if (!url) return "";
+    // opened straight from disk there is no /api — try the source directly
+    if (location.protocol === "file:") return url;
+    return "/api/img?url=" + encodeURIComponent(url);
+  }
+  function counted(r) { return r.bkt === "repair" || r.bkt === "upgrade" || r.bkt === "assembly"; }
+  function inScope(r) {
+    if (scope === "counted") return counted(r);
+    if (scope === "uncounted") return !counted(r);
+    return true;
+  }
+  function bucketOf(r) {
+    if (counted(r)) return r.bkt;
+    // A rescued spare part whose only purchasable form is a bigger assembly
+    // belongs in the assembly bucket, not the repair headline.
+    if (r.cls === "spare_part") return r.asm ? "assembly" : "repair";
+    if (r.cls === "accessory") return "upgrade";
+    return "";
+  }
+  // pipeline.py's arithmetic, verbatim: per-print clamped at 0 and rounded first
+  function contrib(r, price) {
+    var per = Math.round(Math.max(price - r.pc, 0) * 100) / 100;
+    return Math.round(per * r.dl * 100) / 100;
+  }
+  function normDecision(v) {
+    if (v === "keep" || v === "veto") return v;
+    if (v && typeof v === "object") {
+      if (v.v === "keep" || v.v === "veto") return v.v;
+      if (v.v === "accept" && v.u && v.p > 0) return v;
+    }
+    return null;
+  }
+  function stateOf(r) {
+    var d = decisions[r.id];
+    // a counted row is one the strict matcher already verified, so it arrives
+    // confirmed rather than pending — only the uncounted queue is real work
+    if (!d) return counted(r) ? "kept" : "pending";
+    if (d === "veto") return "vetoed";
+    if (d === "keep" || d.v === "accept") return "kept";
+    return "pending";
+  }
+
+  function loadLocal() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (!raw) return;
+      var parsed = JSON.parse(raw);
+      if (parsed && parsed.decisions) {
+        Object.keys(parsed.decisions).forEach(function (id) {
+          var v = normDecision(parsed.decisions[id]);
+          if (v) decisions[id] = v;
+        });
+      }
+    } catch (e) {}
+  }
+  function persistLocal() {
+    try { localStorage.setItem(KEY, JSON.stringify({ decisions: decisions })); } catch (e) {}
+  }
+
+  function setSave(kind, text) {
+    var el = document.getElementById("save");
+    el.className = "save " + kind;
+    el.textContent = text;
+  }
+
+  async function pullServer() {
+    try {
+      var res = await fetch(STATE_URL, { cache: "no-store" });
+      var data = await res.json();
+      if (data && data.ok) {
+        saveMode = "server";
+        document.getElementById("blob-banner").hidden = true;
+        var remote = data.decisions || {};
+        Object.keys(remote).forEach(function (id) {
+          var v = normDecision(remote[id]);
+          if (v) decisions[id] = v;
+        });
+        persistLocal();
+        setSave("ok", "Saved on server");
+        return;
+      }
+      if (data && data.reason === "no-blob") {
+        saveMode = "local";
+        document.getElementById("blob-banner").hidden = false;
+        setSave("err", "This browser only");
+        return;
+      }
+      saveMode = "local";
+      setSave("err", "Server save failed");
+    } catch (e) {
+      saveMode = "local";
+      document.getElementById("blob-banner").hidden = false;
+      setSave("err", "This browser only");
+    }
+  }
+
+  async function pushServer(id, v) {
+    if (saveMode !== "server") return;
+    setSave("wait", "Saving…");
+    try {
+      var res = await fetch(STATE_URL, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ id: id, v: v })
+      });
+      var data = await res.json();
+      if (data && data.ok) {
+        setSave("ok", "Saved");
+        return;
+      }
+      if (data && data.reason === "no-blob") {
+        saveMode = "local";
+        document.getElementById("blob-banner").hidden = false;
+        setSave("err", "This browser only");
+        return;
+      }
+      setSave("err", "Save failed");
+    } catch (e) {
+      setSave("err", "Save failed");
+    }
+  }
+
+  // the Save pill: push everything this browser knows, adopt the merged result —
+  // the recovery path for clicks made before the Blob store existed
+  async function pushAll() {
+    setSave("wait", "Saving all…");
+    try {
+      var res = await fetch(STATE_URL, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ decisions: decisions })
+      });
+      var data = await res.json();
+      if (data && data.ok) {
+        saveMode = "server";
+        document.getElementById("blob-banner").hidden = true;
+        var merged = data.decisions || {};
+        Object.keys(merged).forEach(function (id) {
+          var v = normDecision(merged[id]);
+          if (v) decisions[id] = v;
+        });
+        persistLocal();
+        setSave("ok", "All saved on server");
+        render();
+        return;
+      }
+      if (data && data.reason === "no-blob") {
+        document.getElementById("blob-banner").hidden = false;
+        setSave("err", "This browser only");
+        return;
+      }
+      setSave("err", "Save failed");
+    } catch (e) {
+      setSave("err", "Save failed");
+    }
+  }
+
+  function visible() {
+    var rs = ROWS.filter(function (r) {
+      if (!inScope(r)) return false;
+      if (filter !== "all" && stateOf(r) !== filter) return false;
+      if (q) {
+        var hay = (r.t + " " + r.by + " " + r.part + " " + r.of + " " + r.id +
+                   " " + (r.br || "") + " " + (r.mdl || "") +
+                   (r.qty ? " multipack pack pair set" : "")).toLowerCase();
+        if (hay.indexOf(q) === -1) return false;
+      }
+      return true;
+    });
+    // one list: dollars at stake first, then the uncounted rows
+    // (pools first — decidable at a glance — then the biggest recovery upside)
+    rs.sort(function (a, b) {
+      var ca = counted(a) ? 1 : 0, cb = counted(b) ? 1 : 0;
+      if (ca !== cb) return cb - ca;
+      if (ca) return (b.tot || 0) - (a.tot || 0);
+      return ((b.cands ? 1 : 0) - (a.cands ? 1 : 0)) || (b.dl - a.dl) ||
+        (a.id < b.id ? -1 : 1);
+    });
+    return rs;
+  }
+
+  // the full accounting over all 500 rows: live totals, the model baseline,
+  // and what the review did (vetoes / rescues / swaps). Header chips, the
+  // statistics panel, and Export all read from this one pass.
+  function computeStats() {
+    var s = {
+      baseRepair: 0, baseUpgrade: 0, baseRepairN: 0, baseUpgradeN: 0,
+      baseAssembly: 0, baseAssemblyN: 0, assembly: 0, assemblyN: 0,
+      repair: 0, upgrade: 0, repairN: 0, upgradeN: 0,
+      cAuto: 0, cKept: 0, cSwapped: 0, cVetoed: 0,
+      uPending: 0, uRescued: 0, uVetoed: 0,
+      removed: 0, recovered: 0, swapDelta: 0
+    };
+    ROWS.forEach(function (r) {
+      var d = decisions[r.id];
+      if (counted(r)) {
+        if (r.bkt === "repair") { s.baseRepair += r.tot; s.baseRepairN++; }
+        else if (r.bkt === "assembly") { s.baseAssembly += r.tot; s.baseAssemblyN++; }
+        else { s.baseUpgrade += r.tot; s.baseUpgradeN++; }
+        if (d === "veto") { s.cVetoed++; s.removed += r.tot; return; }
+        // a counted row keeps its dollars unless vetoed; a swap re-prices it
+        // at the listing the reviewer picked instead of the model's
+        var val = r.tot;
+        if (d && d.v === "accept") { val = contrib(r, d.p); s.cSwapped++; s.swapDelta += val - r.tot; }
+        else if (d === "keep") s.cKept++;
+        else s.cAuto++;
+        if (r.bkt === "repair") { s.repair += val; s.repairN++; }
+        else if (r.bkt === "assembly") { s.assembly += val; s.assemblyN++; }
+        else { s.upgrade += val; s.upgradeN++; }
+      } else {
+        if (d === "veto") { s.uVetoed++; return; }
+        if (d && d.v === "accept") {
+          // a rescued row enters at the human-chosen listing's price
+          s.uRescued++;
+          var b = bucketOf(r), add = contrib(r, d.p);
+          if (b === "repair") { s.repair += add; s.repairN++; }
+          else if (b === "assembly") { s.assembly += add; s.assemblyN++; }
+          else if (b === "upgrade") { s.upgrade += add; s.upgradeN++; }
+          if (b) s.recovered += add;
+        } else s.uPending++;
+      }
+    });
+    s.decided = s.cAuto + s.cKept + s.cSwapped + s.cVetoed + s.uRescued + s.uVetoed;
+    s.net = (s.repair + s.assembly + s.upgrade)
+          - (s.baseRepair + s.baseAssembly + s.baseUpgrade);
+    return s;
+  }
+
+  function totals() {
+    var s = computeStats();
+    return { repair: s.repair, assembly: s.assembly, upgrade: s.upgrade, recovered: s.recovered,
+             pending: s.uPending,
+             kept: s.cKept + s.cSwapped + s.uRescued,
+             vetoed: s.cVetoed + s.uVetoed, stats: s };
+  }
+
+  // signed whole-dollar amount for the "effect of review" lines
+  function fmtDelta(v) {
+    if (Math.abs(v) < 0.005) return "$0";
+    return (v < 0 ? "−" : "+") + usd(Math.abs(v));
+  }
+
+  function renderStats(s) {
+    document.getElementById("sdigest").innerHTML =
+      "<b>" + usd(s.repair + s.assembly + s.upgrade) + "</b> total · net " + fmtDelta(s.net) +
+      " vs the model · " + s.decided + " of " + ROWS.length + " decided";
+    function srow(k, v, cls) {
+      return '<div class="srow"><span class="sk">' + k + '</span><span class="sv' +
+        (cls ? " " + cls : "") + '">' + v + "</span></div>";
+    }
+    document.getElementById("sgrid").innerHTML =
+      '<div class="sgroup"><h3>Totals · live vs model</h3>' +
+        srow("Repair", usd(s.repair) + " <small>" + s.repairN + " · was " + usd(s.baseRepair) + "</small>") +
+        srow("Assembly", usd(s.assembly) + " <small>" + s.assemblyN + " · was " + usd(s.baseAssembly) + "</small>") +
+        srow("Upgrade", usd(s.upgrade) + " <small>" + s.upgradeN + " · was " + usd(s.baseUpgrade) + "</small>") +
+        srow("Combined", usd(s.repair + s.assembly + s.upgrade) +
+          " <small>was " + usd(s.baseRepair + s.baseAssembly + s.baseUpgrade) + "</small>") +
+      "</div>" +
+      '<div class="sgroup"><h3>Progress</h3>' +
+        srow("Counted · " + VERIFY_N,
+             s.cAuto + " auto-confirmed · " + s.cKept + " confirmed by you · " +
+             s.cSwapped + " swapped · " + s.cVetoed + " vetoed") +
+        srow("Uncounted · " + RESCUE_N,
+             s.uPending + " pending · " + s.uRescued + " rescued · " +
+             s.uVetoed + " vetoed") +
+        srow("Decided", s.decided + " of " + ROWS.length + " (" +
+             Math.round(100 * s.decided / ROWS.length) + "%)") +
+      "</div>" +
+      '<div class="sgroup"><h3>Effect of review</h3>' +
+        srow("Vetoes removed", s.removed > 0.005 ? "−" + usd(s.removed) : "$0",
+             s.removed > 0.005 ? "neg" : "") +
+        srow("Rescues added", s.recovered > 0.005 ? "+" + usd(s.recovered) : "$0",
+             s.recovered > 0.005 ? "pos" : "") +
+        srow("Swaps re-priced", fmtDelta(s.swapDelta),
+             s.swapDelta > 0.005 ? "pos" : s.swapDelta < -0.005 ? "neg" : "") +
+        srow("Net vs model", fmtDelta(s.net),
+             s.net > 0.005 ? "pos" : s.net < -0.005 ? "neg" : "") +
+      "</div>";
+  }
+
+  function paintChrome() {
+    var t = totals();
+    document.getElementById("n-repair").textContent = usd(t.repair);
+    document.getElementById("n-assembly").textContent = usd(t.assembly);
+    document.getElementById("n-upgrade").textContent = usd(t.upgrade);
+    document.getElementById("n-recovered").textContent = "+" + usd(t.recovered);
+    document.getElementById("n-pending").textContent = String(t.pending);
+    var done = t.kept + t.vetoed;
+    var denom = t.pending + done;
+    document.getElementById("bar").style.width = (denom ? (100 * done / denom) : 0) + "%";
+    renderStats(t.stats);
+    // filter-chip counts follow the current scope so the numbers mean something
+    var sc = { pending: 0, kept: 0, vetoed: 0, all: 0 };
+    ROWS.forEach(function (r) {
+      if (!inScope(r)) return;
+      sc.all++;
+      sc[stateOf(r)]++;
+    });
+    document.getElementById("c-pending").textContent = sc.pending;
+    document.getElementById("c-kept").textContent = sc.kept;
+    document.getElementById("c-vetoed").textContent = sc.vetoed;
+    document.getElementById("c-all").textContent = sc.all;
+    document.getElementById("s-all").textContent = ROWS.length;
+    document.getElementById("s-counted").textContent = VERIFY_N;
+    document.getElementById("s-uncounted").textContent = RESCUE_N;
+    document.querySelectorAll(".chip[data-f]").forEach(function (c) {
+      c.setAttribute("aria-pressed", c.dataset.f === filter ? "true" : "false");
+    });
+    document.querySelectorAll(".chip.mode").forEach(function (c) {
+      c.setAttribute("aria-pressed", c.dataset.s === scope ? "true" : "false");
+    });
+  }
+
+  // ------------------------------------------------------------ list rows
+  function thumb(url, alt) {
+    if (!url) return '<span class="lph">no photo</span>';
+    return '<img loading="lazy" referrerpolicy="no-referrer" alt="' + esc(alt) + '" src="' +
+      esc(proxied(url)) + '">';
+  }
+
+  // "· Cobra 1965 - 1967" — the vehicle this part belongs to. On a brand page the
+  // brand is the page, so only model/years earn a place on the row.
+  function veh(r) {
+    var bits = [];
+    if (r.mdl) bits.push(r.mdl);
+    else if (r.br) bits.push(r.br);
+    if (r.yrs) bits.push(r.yrs);
+    return bits.length ? ' · <span class="veh">' + esc(bits.join(" ")) + "</span>" : "";
+  }
+
+  // the listing sells n of them; the print is one. Flag, don't correct — some
+  // Things really are the pair the listing sells.
+  function qtyBadge(r) {
+    if (!r.qty || !r.p) return "";
+    return '<div class="qty" title="The eBay listing advertises ' + r.qty +
+      " units — if this print is one unit, the row is priced " + r.qty +
+      "× too high. Check the listing, then swap or veto.\">" +
+      "listing is " + r.qty + "× · ~$" + (r.p / r.qty).toFixed(2) + " each</div>";
+  }
+
+  function listRow(r) {
+    var st = stateOf(r);
+    var d = decisions[r.id];
+    var thumbs, nums, act;
+
+    if (counted(r)) {
+      // the model's match stands by default — a pending row already counts;
+      // deciding it can confirm (keep), remove (veto), or re-price it (swap)
+      var swapped = st === "kept" && d && typeof d === "object" && d.v === "accept";
+      var effP = swapped ? d.p : r.p;
+      var effTot = swapped ? contrib(r, d.p) : r.tot;
+      thumbs = thumb(r.ti, "printed part") + thumb(swapped ? (d.im || r.li) : r.li, "eBay listing");
+      nums = "$" + effP.toFixed(2) + " × " + r.dl + "<br>" +
+        '<span class="bdot ' + r.bkt + '"></span><b>' + usd(effTot) + "</b>";
+      act =
+        (!d
+          ? '<span class="badge auto" title="The strict matcher verified this one, so it arrives confirmed and its dollars count. Veto kicks it out; expand to re-confirm by hand or swap the listing.">auto-confirmed ✓</span>' +
+            '<button class="mini veto" type="button" data-act="veto">Veto ✕</button>'
+          : '<span class="badge ' + (st === "kept" ? "kept" : "vetoed") + '">' +
+              (st === "kept" ? (swapped ? "swapped" : "confirmed by you") : "vetoed") + "</span>" +
+            '<button class="mini ghost" type="button" data-act="undo">Undo</button>');
+    } else {
+      var poolBit = r.cands
+        ? '<span class="lph">' + r.cands.length + "<br>listings</span>"
+        : '<span class="lph">no pool</span>';
+      thumbs = thumb(r.ti, "printed part") + poolBit;
+      if (st === "kept" && d && d.v === "accept") {
+        nums = "$" + d.p.toFixed(2) + " × " + r.dl + "<br>" +
+          '<span class="bdot ' + (bucketOf(r) || "repair") + '"></span><b>+' +
+          usd(contrib(r, d.p)) + "</b>";
+      } else {
+        nums = r.dl + " downloads<br><b>$0</b>";
+      }
+      act =
+        (st === "pending"
+          ? '<button class="mini ghost" type="button" data-act="toggle">Pick match ▾</button>' +
+            '<button class="mini veto" type="button" data-act="veto">Veto ✕</button>'
+          : '<span class="badge ' + (st === "kept" ? "matched" : "vetoed") + '">' +
+              (st === "kept" ? "matched" : "vetoed") + "</span>" +
+            '<button class="mini ghost" type="button" data-act="undo">Undo</button>');
+    }
+
+    return '<div class="lrow st-' + st + (open[r.id] ? " open" : "") +
+      '" data-id="' + r.id + '" role="button" tabindex="0" aria-expanded="' + !!open[r.id] + '">' +
+      '<div class="lthumbs">' + thumbs + "</div>" +
+      '<div class="lmain"><div class="lt">' + esc(r.t) + '</div>' +
+        '<div class="lsub">' + esc(r.part || "") + veh(r) + (r.by ? " · " + esc(r.by) : "") + "</div></div>" +
+      '<div class="lnum">' + nums + qtyBadge(r) + "</div>" +
+      '<div class="lact">' + act + '<span class="chev">' + (open[r.id] ? "▲" : "▼") + "</span></div>" +
+      "</div>" +
+      (open[r.id] ? '<div class="ldetail" data-for="' + r.id + '">' + detail(r) + "</div>" : "");
+  }
+
+  // ---------------------------------------------------------- detail views
+  function thingPane(r, capText) {
+    var img = r.ti
+      ? '<img alt="Thingiverse preview of the printed part" referrerpolicy="no-referrer" src="' + esc(proxied(r.ti)) + '">'
+      : '<div class="empty">No Thingiverse photo on file.<br>Open the Thing page to look.</div>';
+    return '<div class="pane"><div class="lab"><span>Thingiverse · printed part</span><span>' +
+      esc(r.by) + "</span></div>" +
+      '<div class="frame">' + img + "</div>" +
+      '<div class="cap">' + capText + "</div></div>";
+  }
+
+  function detail(r) {
+    return counted(r) ? verifyDetail(r) : rescueDetail(r);
+  }
+
+  // the candidate pool as a pane — the rescue queue picks its match from it,
+  // and counted rows use the same pane to SWAP the model's pick for another
+  function poolPane(r, forCounted) {
+    var d = decisions[r.id];
+    var body;
+    if (r.cands && r.cands.length) {
+      body = '<div class="cand-list">' + r.cands.map(function (c) {
+        var picked = !!(d && typeof d === "object" && d.v === "accept" && d.u === c.u);
+        var isNow = !!(r.now && c.i === r.now);
+        var note = "";
+        if (isNow) {
+          note = forCounted
+            ? ' · <span class="picknote">the model&#39;s current pick</span>'
+            : ' · <span class="refnote">the judge refused this one</span>';
+        }
+        return '<div class="cand' + (picked ? " picked" : "") +
+          (isNow ? (forCounted ? " modelpick" : " refused") : "") +
+          '" data-i="' + c.i + '" role="button" tabindex="0" ' +
+          'title="Click to price this row with this listing">' +
+          '<span class="ci">' + c.i + '</span>' +
+          (c.im ? '<img loading="lazy" referrerpolicy="no-referrer" alt="Listing photo, candidate ' + c.i + '" src="' + esc(proxied(c.im)) + '">'
+                : '<span class="noimg" aria-hidden="true"></span>') +
+          '<span class="cb">' +
+            '<a class="ct" href="' + esc(c.u) + '" target="_blank" rel="noopener">' + esc(c.t) + '</a>' +
+            '<span class="cm">$' + c.p.toFixed(2) +
+              (c.s ? " + $" + c.s.toFixed(2) + " ship" : " · free ship") +
+              note +
+            "</span>" +
+          "</span>" +
+          '<button class="pick" type="button" data-i="' + c.i + '">Same part ✓</button>' +
+        "</div>";
+      }).join("") + "</div>";
+    } else {
+      body = '<div class="frame"><div class="empty">' +
+        (r.err ? "This row errored: " + esc(r.err) + "<br>There is nothing to match — veto it."
+               : "No candidate pool captured for this row.<br>eBay returned nothing for its query, or " +
+                 "<code>capture_candidates.py --all</code> hasn&#39;t reached it yet — " +
+                 "search eBay or enter a listing by hand.") +
+        "</div></div>";
+    }
+    var manual = r.q
+      ? '<details class="manual"><summary>' +
+        (forCounted
+          ? "Found a better listing elsewhere? Swap it in by hand"
+          : "Found the right listing elsewhere? Enter it by hand") +
+        "</summary>" +
+        '<div class="mf">' +
+          '<input class="mu" type="url" placeholder="https://www.ebay.com/itm/…" aria-label="Listing URL">' +
+          '<input class="mp" type="number" min="0" step="0.01" placeholder="item $" aria-label="Item price USD">' +
+          '<input class="ms" type="number" min="0" step="0.01" placeholder="ship $" aria-label="Shipping USD">' +
+          '<button class="pick" type="button" data-act="manual">Same part ✓</button>' +
+        "</div></details>"
+      : "";
+    var why = forCounted ? "" : (r.p > 0 && r.jr ? "Judge: " + r.jr : (r.mr || r.jr || ""));
+    var capBits = [];
+    if (r.q) capBits.push('query <code>' + esc(r.q) + '</code>' +
+      ' · <a href="https://www.ebay.com/sch/i.html?_nkw=' +
+      encodeURIComponent(r.q) + '" target="_blank" rel="noopener">search eBay ↗</a>');
+    if (why) capBits.push(esc(why));
+    return '<div class="pane"><div class="lab"><span>' +
+      (forCounted ? "Swap · the pool the matcher chose from" : "eBay · the pool the matcher saw") +
+      "</span><span>" + (r.at ? "captured " + esc(r.at) : "") + "</span></div>" +
+      body + manual +
+      (capBits.length ? '<div class="cap">' + capBits.join("<br>") + "</div>" : "") +
+      "</div>";
+  }
+
+  function verifyDetail(r) {
+    var st = stateOf(r);
+    var d = decisions[r.id];
+    var swapped = st === "kept" && d && typeof d === "object" && d.v === "accept";
+    var price = swapped ? d.p : r.p;
+    var tot = swapped ? contrib(r, price) : r.tot;
+    var li = swapped ? d.im : r.li;
+    var lt = swapped ? (d.t || "(picked listing)") : (r.lt || "(untitled listing)");
+    var lu = swapped ? d.u : r.surl;
+    var ebayImg = li
+      ? '<img alt="eBay listing photo" referrerpolicy="no-referrer" src="' + esc(proxied(li)) + '">'
+      : '<div class="empty">No eBay photo.</div>';
+    return '<p class="sub"><b>$' + price.toFixed(2) + "</b> item − $" + r.pc.toFixed(2) +
+        " print × " + r.dl + " downloads = <b>" + usd(tot) + "</b> · " + esc(r.tier || "") +
+        (swapped ? "" : " · the model&#39;s match stands unless you veto or swap it") +
+        "</p>" +
+      '<div class="pair">' +
+        thingPane(r, "Does this look like the same physical part as the listing on the right?") +
+        '<div class="pane"><div class="lab"><span>' +
+          (swapped ? "eBay · swapped by review" : "eBay · the model&#39;s pick") +
+          "</span><span>" + esc(r.tier || "") + "</span></div>" +
+          '<div class="frame">' + ebayImg + "</div>" +
+          '<div class="cap">' + esc(lt) + "</div></div>" +
+      "</div>" +
+      (r.mr ? '<div class="why"><b>Why the model matched it</b>' + esc(r.mr) + "</div>" : "") +
+      '<div style="margin-top:14px">' + poolPane(r, true) + "</div>" +
+      '<div class="dactions">' +
+        (!d
+          ? '<span class="badge auto" title="The strict matcher verified this one and its dollars already count — nothing is required here.">auto-confirmed ✓</span>' +
+            '<button class="mini ghost" type="button" data-act="keep" ' +
+              'title="Optional — records that a human checked this row on top of the matcher">Checked it myself ✓</button>' +
+            '<button class="mini veto" type="button" data-act="veto">Veto · not the same ✕</button>'
+          : '<span class="badge ' + (st === "kept" ? "kept" : "vetoed") + '">' +
+              (st === "kept" ? (swapped ? "swapped" : "confirmed by you") : "vetoed") + "</span>" +
+            '<button class="mini ghost" type="button" data-act="undo">Undo</button>') +
+        '<div class="links">' +
+          '<a href="' + esc(r.url) + '" target="_blank" rel="noopener">Thing page ↗</a>' +
+          (lu ? '<a href="' + esc(lu) + '" target="_blank" rel="noopener">eBay listing ↗</a>' : "") +
+        "</div>" +
+      "</div>";
+  }
+
+  function rescueDetail(r) {
+    var st = stateOf(r);
+    return '<p class="sub">$' + r.pc.toFixed(2) + " print · " + r.dl + " downloads" +
+        (r.p ? " · judge refused its <b>$" + r.p.toFixed(2) + "</b> price" : " · currently counts $0") +
+        " — pick the listing that really is the same part, or veto.</p>" +
+      '<div class="pair">' +
+        thingPane(r, "Is one of the listings on the right this same physical part?") +
+        poolPane(r, false) +
+      "</div>" +
+      '<div class="dactions">' +
+        (st === "pending"
+          ? '<button class="mini veto" type="button" data-act="veto">Veto · nothing matches ✕</button>'
+          : '<span class="badge ' + (st === "kept" ? "matched" : "vetoed") + '">' +
+              (st === "kept" ? "matched" : "vetoed") + "</span>" +
+            '<button class="mini ghost" type="button" data-act="undo">Undo</button>') +
+        '<div class="links">' +
+          '<a href="' + esc(r.url) + '" target="_blank" rel="noopener">Thing page ↗</a>' +
+          (r.surl ? '<a href="' + esc(r.surl) + '" target="_blank" rel="noopener">Refused listing ↗</a>' : "") +
+        "</div>" +
+      "</div>";
+  }
+
+  // ------------------------------------------------------------- rendering
+  function render() {
+    paintChrome();
+    var rs = visible();
+    var root = document.getElementById("list");
+    if (!rs.length) {
+      var t = totals();
+      root.innerHTML =
+        '<div class="done"><h2>' + (filter === "pending" ? "Queue is clear" : "Nothing here") + '</h2><p>' +
+        (filter === "pending"
+          ? (t.kept + t.vetoed) + " decided. Repair now " + usd(t.repair) +
+            ", upgrade " + usd(t.upgrade) +
+            (t.recovered ? ", " + usd(t.recovered) + " of that recovered by review" : "") + "."
+          : "Nothing matches this filter" + (q ? " and search" : "") + ".") +
+        '</p><button class="mini ghost" type="button" id="show-all">Show all</button></div>';
+      var b = document.getElementById("show-all");
+      if (b) b.addEventListener("click", function () { scope = "all"; filter = "all"; q = ""; document.getElementById("q").value = ""; render(); });
+      document.getElementById("countline").textContent = "0 rows";
+      return;
+    }
+    root.innerHTML = '<div class="list">' + rs.map(listRow).join("") + "</div>";
+    var scopeN = scope === "counted" ? VERIFY_N : scope === "uncounted" ? RESCUE_N : ROWS.length;
+    document.getElementById("countline").textContent =
+      rs.length + " of " + scopeN +
+      " rows · click a row for the side-by-side detail · dollars at stake first, then the uncounted (pools first)";
+  }
+
+  // update one row (and its open detail) in place — decided rows stay visible
+  // until the next filter change, so the list doesn't jump under the cursor
+  function updateRow(id) {
+    paintChrome();
+    var node = document.querySelector('.lrow[data-id="' + id + '"]');
+    if (!node) { render(); return; }
+    var det = document.querySelector('.ldetail[data-for="' + id + '"]');
+    if (det) det.remove();
+    var r = byId[id];
+    var tmp = document.createElement("div");
+    tmp.innerHTML = listRow(r);
+    while (tmp.firstChild) {
+      node.parentNode.insertBefore(tmp.firstChild, node);
+    }
+    node.remove();
+  }
+
+  function decide(id, v) {
+    undoStack.push({ id: id, prev: decisions[id] || null });
+    if (v) decisions[id] = v;
+    else delete decisions[id];
+    persistLocal();
+    pushServer(id, v || null);
+    updateRow(id);
+  }
+
+  function accept(r, cand, src) {
+    // record everything apply_review.py needs to price the row later
+    decide(r.id, { v: "accept", u: cand.u, p: cand.p, s: cand.s || 0,
+                   t: cand.t || "", im: cand.im || "", src: src,
+                   ts: new Date().toISOString() });
+  }
+
+  function undo() {
+    var last = undoStack.pop();
+    if (!last) return;
+    if (last.prev) decisions[last.id] = last.prev;
+    else delete decisions[last.id];
+    persistLocal();
+    pushServer(last.id, last.prev || null);
+    updateRow(last.id);
+  }
+
+  // ------------------------------------------------------------ interaction
+  document.getElementById("list").addEventListener("click", function (e) {
+    var row = e.target.closest(".lrow");
+    var det = e.target.closest(".ldetail");
+    var host = row || det;
+    if (!host) return;
+    var id = row ? row.dataset.id : det.dataset.for;
+    var r = byId[id];
+    if (!r) return;
+    if (e.target.closest("a")) return;
+
+    var actBtn = e.target.closest("[data-act]");
+    if (actBtn) {
+      var a = actBtn.dataset.act;
+      if (a === "keep") decide(id, "keep");
+      else if (a === "veto") decide(id, "veto");
+      else if (a === "undo") undo();
+      else if (a === "toggle") { open[id] = !open[id]; updateRow(id); }
+      else if (a === "manual") {
+        var mf = actBtn.closest(".mf");
+        var u = (mf.querySelector(".mu").value || "").trim();
+        var p = parseFloat(mf.querySelector(".mp").value);
+        var s = parseFloat(mf.querySelector(".ms").value) || 0;
+        if (!u || !(p > 0)) { setSave("err", "Need a URL and an item price"); return; }
+        accept(r, { u: u, p: Math.round(p * 100) / 100, s: Math.round(s * 100) / 100,
+                    t: "(entered by hand)", im: "" }, "manual");
+      }
+      return;
+    }
+
+    var cand = e.target.closest(".cand, .cand .pick");
+    if (cand && r.cands) {
+      var i = parseInt(cand.dataset.i, 10);
+      var c = null;
+      r.cands.forEach(function (x) { if (x.i === i) c = x; });
+      if (c) accept(r, c, "pool");
+      return;
+    }
+
+    if (det) return;                       // clicks inside the detail don't collapse it
+    if (e.target.closest("summary, input")) return;
+    open[id] = !open[id];                  // row click toggles the detail
+    updateRow(id);
+  });
+
+  document.getElementById("list").addEventListener("keydown", function (e) {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    var row = e.target.closest(".lrow");
+    if (!row || e.target !== row) return;
+    e.preventDefault();
+    open[row.dataset.id] = !open[row.dataset.id];
+    updateRow(row.dataset.id);
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    var tag = (e.target && e.target.tagName) || "";
+    if (tag === "INPUT" || tag === "TEXTAREA") return;
+    if (e.key.toLowerCase() === "z") { e.preventDefault(); undo(); }
+  });
+
+  var VERIFY_N = ROWS.filter(function (r) { return counted(r); }).length;
+  var RESCUE_N = ROWS.filter(function (r) { return !counted(r); }).length;
+
+  document.querySelectorAll(".chip[data-f]").forEach(function (c) {
+    c.addEventListener("click", function () { filter = c.dataset.f; render(); });
+  });
+  document.querySelectorAll(".chip.mode").forEach(function (c) {
+    c.addEventListener("click", function () { scope = c.dataset.s; render(); });
+  });
+  var qTimer = null;
+  document.getElementById("q").addEventListener("input", function (e) {
+    clearTimeout(qTimer);
+    qTimer = setTimeout(function () {
+      q = e.target.value.trim().toLowerCase();
+      render();
+    }, 120);
+  });
+  document.getElementById("save").addEventListener("click", function () {
+    // works both as "retry the server" and as "push everything I decided offline"
+    if (saveMode === "server") { pushAll(); }
+    else pullServer().then(function () {
+      if (saveMode === "server") pushAll(); else render();
+    });
+  });
+  function stamp() { return new Date().toISOString().slice(0, 10); }
+  function download(name, mime, text) {
+    var blob = new Blob([text], { type: mime });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+  }
+
+  document.getElementById("export").addEventListener("click", function () {
+    // a snapshot apply_review.py can consume directly (it reads .decisions),
+    // with the statistics panel's numbers alongside for the record
+    var s = computeStats();
+    var c = function (v) { return Math.round(v * 100) / 100; };
+    var out = {
+      exported_at: new Date().toISOString(),
+      rows: ROWS.length,
+      stats: {
+        repair_total: c(s.repair), upgrade_total: c(s.upgrade),
+        combined_total: c(s.repair + s.upgrade),
+        baseline_repair: c(s.baseRepair), baseline_upgrade: c(s.baseUpgrade),
+        baseline_assembly: c(s.baseAssembly), assembly: c(s.assembly),
+        net_vs_model: c(s.net),
+        counted: { auto_confirmed: s.cAuto, confirmed: s.cKept, swapped: s.cSwapped, vetoed: s.cVetoed },
+        uncounted: { pending: s.uPending, rescued: s.uRescued, vetoed: s.uVetoed },
+        vetoes_removed: c(s.removed), rescues_added: c(s.recovered),
+        swap_delta: c(s.swapDelta), decided: s.decided
+      },
+      decisions: decisions
+    };
+    download("review-decisions-" + stamp() + ".json", "application/json",
+             JSON.stringify(out, null, 2));
+  });
+
+  // ---- standalone HTML report ----------------------------------------------
+  // The version you send to a person rather than to the pipeline: the totals, what
+  // review changed, and every row a human moved with both photos. Photos point at
+  // this deployment's /api/img by absolute URL so they still resolve from a file
+  // saved on someone else's disk.
+  var REPORT_CSS = [
+    ":root{--ivory:#FAF9F5;--paper:#fff;--slate:#141413;--clay:#D97757;--clay-d:#B85C3E;",
+    "--olive:#788C5D;--g100:#F0EEE6;--g200:#E6E3DA;--g300:#D1CFC5;--g500:#87867F;--g700:#3D3D3A;",
+    "--serif:ui-serif,Georgia,'Times New Roman',serif;--sans:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;",
+    "--mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace}",
+    "*{box-sizing:border-box}body{margin:0;background:var(--ivory);color:var(--slate);",
+    "font-family:var(--sans);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}",
+    ".page{max-width:1100px;margin:0 auto;padding:48px 24px 96px}",
+    ".eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;",
+    "color:var(--g500);margin-bottom:16px;display:flex;align-items:center;gap:12px}",
+    ".eyebrow::before{content:'';width:24px;height:1.5px;background:var(--clay);flex:none}",
+    "h1{font-family:var(--serif);font-weight:500;font-size:clamp(32px,5vw,46px);line-height:1.1;",
+    "letter-spacing:-.018em;margin:0 0 12px}h1 em{font-style:italic;color:var(--clay)}",
+    ".lede{font-size:16px;color:var(--g700);max-width:62ch;margin:0 0 40px}",
+    "h2{font-family:var(--serif);font-weight:500;font-size:24px;margin:52px 0 6px}",
+    "hr{border:none;border-top:1px solid var(--g300);margin:0 0 22px}",
+    ".note{color:var(--g700);font-size:14px;max-width:66ch;margin:-4px 0 22px}",
+    ".cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:34px}",
+    ".card{background:var(--paper);border:1.5px solid var(--g300);border-radius:14px;padding:18px;border-top:3px solid var(--g300)}",
+    ".card.r{border-top-color:var(--clay)}.card.a{border-top-color:var(--olive)}",
+    ".card.u{border-top-color:#2a78d6}",
+    ".card .k{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);margin-bottom:7px}",
+    ".card .v{font-family:var(--serif);font-size:27px;line-height:1.15}",
+    ".card .s{font-size:12.5px;color:var(--g500);margin-top:5px}",
+    ".pos{color:var(--olive);font-weight:600}.neg{color:var(--clay-d);font-weight:600}",
+    ".tw{overflow-x:auto;border:1.5px solid var(--g300);border-radius:12px;background:var(--paper)}",
+    "table{border-collapse:collapse;width:100%;font-size:14px;min-width:820px}",
+    "th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--g200);vertical-align:top}",
+    "th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;",
+    "color:var(--g500);font-weight:500;background:var(--g100);white-space:nowrap}",
+    "tr:last-child td{border-bottom:none}td.n{font-family:var(--mono);font-size:13px;white-space:nowrap;text-align:right}",
+    "td.pics{white-space:nowrap;width:132px}td.pics img,.noimg{width:60px;height:60px;object-fit:contain;",
+    "border:1px solid var(--g200);border-radius:6px;background:var(--g100);display:inline-block;margin-right:4px}",
+    ".noimg{font-size:9px;color:var(--g500);text-align:center;line-height:60px;font-family:var(--mono)}",
+    ".sub{font-size:12px;color:var(--g500);margin-top:3px}",
+    "a{color:var(--clay-d);text-underline-offset:2px}a:hover{color:var(--clay)}",
+    ".b{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;",
+    "padding:3px 9px;border-radius:20px;background:var(--g100);color:var(--g700);white-space:nowrap}",
+    ".b.vetoed{background:#F6E3DC;color:var(--clay-d)}.b.rescued{background:#E7ECDF;color:#5F7049}",
+    ".b.swapped{background:var(--g200);color:var(--g700)}.b.confirmed{background:#E7ECDF;color:#5F7049}",
+    ".b.auto-confirmed{background:var(--g100);color:var(--g500)}.b.refused{background:var(--g200);color:var(--g700)}",
+    ".why{font-size:12.5px;color:var(--g700);max-width:48ch;line-height:1.45}",
+    ".lph{display:inline-block;width:60px;height:60px;line-height:60px;text-align:center;",
+    "font-family:var(--mono);font-size:10px;color:var(--g500);background:var(--g100);",
+    "border:1px solid var(--g200);border-radius:6px;vertical-align:top}",
+    "footer{margin-top:56px;border-top:1px solid var(--g300);padding-top:20px;font-family:var(--mono);",
+    "font-size:11.5px;color:var(--g500);line-height:1.7}",
+    "@media print{body{background:#fff}.page{padding:0;max-width:none}tr,.card{break-inside:avoid}}"
+  ].join("");
+
+  function reportHtml() {
+    var s = computeStats();
+    var origin = location.origin;
+    var pic = function (u) {
+      if (!u) return "";
+      // opened from disk there is no deployment to proxy through — use the source
+      if (origin.indexOf("http") !== 0) return u;
+      return origin + "/api/img?url=" + encodeURIComponent(u);
+    };
+    var shot = function (u, alt) {
+      // a listing photo that 404s should leave a quiet gap, not a broken-image glyph
+      return u ? '<img src="' + esc(pic(u)) + '" alt="' + esc(alt) + '" loading="lazy"' +
+                 ' onerror="this.style.visibility=&#39;hidden&#39;">'
+               : '<div class="noimg">no photo</div>';
+    };
+
+    // split by where each row actually lands, so the two tables add up to the total
+    var inn = [], outn = [];
+    ROWS.forEach(function (r) {
+      var d = decisions[r.id];
+      var acc = d && typeof d === "object" && d.v === "accept";
+      if (d === "veto") { outn.push({ r: r, why: "vetoed" }); return; }
+      if (counted(r)) {
+        inn.push({ r: r, status: acc ? "swapped" : (d === "keep" ? "confirmed by you" : "auto-confirmed"),
+                   price: acc ? d.p : r.p, total: acc ? contrib(r, d.p) : r.tot,
+                   lt: acc ? (d.t || "(picked listing)") : (r.lt || "(untitled listing)"),
+                   lu: acc ? d.u : r.surl, li: acc ? (d.im || r.li) : r.li,
+                   ship: acc ? (d.s || 0) : 0 });
+      } else if (acc) {
+        inn.push({ r: r, status: "rescued", price: d.p, total: contrib(r, d.p),
+                   lt: d.t || "(picked listing)", lu: d.u, li: d.im, ship: d.s || 0 });
+      } else {
+        outn.push({ r: r, why: "refused" });
+      }
+    });
+    inn.sort(function (a, b) { return b.total - a.total; });
+    outn.sort(function (a, b) { return b.r.dl - a.r.dl; });
+
+    var inRows = inn.map(function (m) {
+      var r = m.r;
+      return "<tr>" +
+        '<td class="pics">' + shot(r.ti, "printed part") + shot(m.li, "eBay listing") + "</td>" +
+        "<td><a href=\"" + esc(r.url) + "\">" + esc(r.t) + "</a>" +
+          '<div class="sub">' + esc(r.part || "") + (r.by ? " · " + esc(r.by) : "") + "</div></td>" +
+        '<td><span class="b ' + m.status.split(" ")[0] + '">' + esc(m.status) + "</span>" +
+          (r.tier ? '<div class="sub">' + esc(r.tier) + "</div>" : "") + "</td>" +
+        "<td>" + (m.lu ? "<a href=\"" + esc(m.lu) + "\">" + esc(m.lt) + "</a>"
+                       : '<span class="sub">' + esc(m.lt) + "</span>") +
+          '<div class="sub">$' + m.price.toFixed(2) + " item" +
+          (m.ship ? " · $" + m.ship.toFixed(2) + " shipping" : "") + "</div></td>" +
+        '<td class="n">$' + m.price.toFixed(2) + "</td>" +
+        '<td class="n">$' + r.pc.toFixed(2) + "</td>" +
+        '<td class="n">' + r.dl.toLocaleString("en-US") + "</td>" +
+        '<td class="n"><b>' + usd(m.total) + "</b></td></tr>";
+    }).join("");
+
+    var outRows = outn.map(function (m) {
+      var r = m.r;
+      var reason = r.mr || r.jr || (m.why === "vetoed" ? "a reviewer marked this as not the same part" : "no strictly-verified listing");
+      return "<tr>" +
+        '<td class="pics">' + shot(r.ti, "printed part") +
+          '<span class="lph">' + (r.cands ? r.cands.length + " seen" : "no pool") + "</span></td>" +
+        "<td><a href=\"" + esc(r.url) + "\">" + esc(r.t) + "</a>" +
+          '<div class="sub">' + esc(r.part || "") + (r.by ? " · " + esc(r.by) : "") + "</div></td>" +
+        '<td><span class="b ' + (m.why === "vetoed" ? "vetoed" : "refused") + '">' +
+          (m.why === "vetoed" ? "vetoed by review" : "refused by the matcher") + "</span></td>" +
+        '<td class="why">' + esc(reason) +
+          (r.surl ? ' <a href="' + esc(r.surl) + '">the listing it refused ↗</a>' : "") + "</td>" +
+        '<td class="n">' + r.dl.toLocaleString("en-US") + "</td>" +
+        '<td class="n">$0</td></tr>';
+    }).join("");
+
+    var card = function (k, v, sub, cls) {
+      return '<div class="card ' + (cls || "") + '"><div class="k">' + k + '</div><div class="v">' +
+        v + '</div><div class="s">' + sub + "</div></div>";
+    };
+    var when = new Date();
+
+    return "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n" +
+      '<meta name="viewport" content="width=device-width, initial-scale=1">\n' +
+      "<title>Match review — " + esc(stamp()) + "</title>\n<style>" + REPORT_CSS + "</style>\n" +
+      "</head>\n<body>\n<div class=\"page\">\n" +
+      '<p class="eyebrow">Review report · ' + esc(stamp()) + "</p>\n" +
+      "<h1>Match review: <em>" + usd(s.repair + s.upgrade) + "</em> after review</h1>\n" +
+      '<p class="lede">' + ROWS.length + " printed parts matched against live eBay listings. " +
+      "Every row is listed below: " + inn.length + " that carry dollars, and " + outn.length +
+      " that carry none and why.</p>\n" +
+      '<div class="cards">' +
+        card("Repair", usd(s.repair), s.repairN + " parts · model said " + usd(s.baseRepair), "r") +
+        card("Assembly", usd(s.assembly), s.assemblyN + " parts · model said " + usd(s.baseAssembly), "a") +
+        card("Upgrade", usd(s.upgrade), s.upgradeN + " parts · model said " + usd(s.baseUpgrade), "u") +
+        card("Combined", usd(s.repair + s.assembly + s.upgrade),
+             "model said " + usd(s.baseRepair + s.baseAssembly + s.baseUpgrade)) +
+        card("Net of review", fmtDelta(s.net),
+             (s.net >= 0 ? "review added" : "review removed") + " vs the model") +
+      "</div>\n" +
+      "<h2>What review changed</h2>\n<hr>\n" +
+      '<div class="cards">' +
+        card("Vetoed", String(s.cVetoed + s.uVetoed),
+             (s.removed > 0.005 ? "−" + usd(s.removed) : "$0") + " taken out") +
+        card("Rescued", String(s.uRescued),
+             (s.recovered > 0.005 ? "+" + usd(s.recovered) : "$0") + " added back") +
+        card("Swapped", String(s.cSwapped), fmtDelta(s.swapDelta) + " re-priced") +
+        card("Confirmed", String(s.cAuto + s.cKept),
+             s.cAuto + " by the matcher · " + s.cKept + " by hand") +
+      "</div>\n" +
+      "<h2>Counted — " + inn.length + " rows carrying dollars</h2>\n<hr>\n" +
+      '<p class="note">Every row that contributes to the total, biggest first. ' +
+      "<b>auto-confirmed</b> is the strict matcher's own verified pick; <b>confirmed by you</b>, " +
+      "<b>swapped</b> and <b>rescued</b> are rows a human touched.</p>\n" +
+      '<div class="tw"><table><thead><tr><th>Photos</th><th>Printed part</th><th>Status</th>' +
+      "<th>Listing matched</th><th>Item</th><th>Print</th><th>Downloads</th><th>Savings</th>" +
+      "</tr></thead><tbody>" + inRows + "</tbody></table></div>\n" +
+      "<h2>Not counted — " + outn.length + " rows carrying $0</h2>\n<hr>\n" +
+      '<p class="note">The strict pass refused these, or a reviewer vetoed them. They add ' +
+      "nothing to the total; the reason each one was rejected is spelled out.</p>\n" +
+      '<div class="tw"><table><thead><tr><th>Photos</th><th>Printed part</th><th>Status</th>' +
+      "<th>Why it is not counted</th><th>Downloads</th><th>Savings</th>" +
+      "</tr></thead><tbody>" + outRows + "</tbody></table></div>\n" +
+      "<footer>Generated " + esc(when.toISOString()) + " from " + esc(origin) +
+      ". Savings arithmetic is the pipeline's own: (item price − print cost) × downloads, " +
+      "clamped at zero. Prices are the item only — shipping is reported separately. " +
+      "Photos load through the review deployment's image proxy, so they need it reachable." +
+      "</footer>\n</div>\n</body>\n</html>";
+  }
+
+  document.getElementById("export-html").addEventListener("click", function () {
+    download("review-report-" + stamp() + ".html", "text/html;charset=utf-8", reportHtml());
+  });
+  // another reviewer may have decided rows while this tab was in the background
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden && saveMode === "server") pullServer().then(render);
+  });
+
+  // #t<id> — the overview's dollar-head links land on one row: open it, scroll to
+  // it, and flash it so it's obvious which of 900 rows was meant.
+  function jumpToHash() {
+    var m = /^#t(\d+)$/.exec(location.hash || "");
+    if (!m || !byId[m[1]]) return;
+    var id = m[1];
+    open[id] = true;
+    render();
+    var el = document.querySelector('.lrow[data-id="' + id + '"]');
+    if (!el) return;
+    el.scrollIntoView({ block: "center", behavior: "instant" });
+    el.classList.add("flash");
+    setTimeout(function () { el.classList.remove("flash"); }, 1600);
+  }
+
+  loadLocal();
+  render();
+  jumpToHash();
+  window.addEventListener("hashchange", jumpToHash);
+  pullServer().then(render);
+})();
+</script>
+</body>
+</html>

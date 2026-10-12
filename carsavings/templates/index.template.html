@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Printable car parts — what they save</title>
+<meta name="description" content="Printable car spare parts across every brand: what the pipeline found, what it priced against real eBay listings, and the savings that follow. Open a brand to review its matches.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#128663;</text></svg>">
+<style>
+  :root {
+    --ivory:  #FAF9F5;
+    --paper:  #FFFFFF;
+    --slate:  #141413;
+    --clay:   #D97757;
+    --clay-d: #B85C3E;
+    --oat:    #E3DACC;
+    --olive:  #788C5D;
+    --g100:   #F0EEE6;
+    --g200:   #E6E3DA;
+    --g300:   #D1CFC5;
+    --g500:   #87867F;
+    --g700:   #3D3D3A;
+    --repair: #B85C3E;
+    --upgrade:#2a78d6;
+    --assembly:#788C5D;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --border: 1px solid var(--g200);
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--ivory); color: var(--slate);
+    font-family: var(--sans); font-size: 14px; line-height: 1.5;
+  }
+  a { color: var(--clay-d); }
+
+  header.top {
+    position: sticky; top: 0; z-index: 20;
+    background: color-mix(in srgb, var(--ivory) 88%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: var(--border);
+    padding: 12px 22px;
+  }
+  .top-row { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+  .brand {
+    font-family: var(--serif); font-size: 18px; font-weight: 500;
+    letter-spacing: -0.02em; margin-right: auto;
+  }
+  .brand em { font-style: italic; color: var(--clay); }
+  .allhref {
+    font-size: 12px; text-decoration: none; color: var(--g700);
+    border: var(--border); border-radius: 999px; padding: 5px 12px;
+    background: var(--paper); white-space: nowrap;
+  }
+  .allhref:hover { border-color: var(--clay); color: var(--clay-d); }
+  .stat { font-variant-numeric: tabular-nums; min-width: 7.5rem; }
+  .stat .k {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--g500);
+  }
+  .stat .v { font-family: var(--serif); font-size: 20px; font-weight: 500; line-height: 1.15; }
+  .stat.repair .v { color: var(--repair); }
+  .stat.upgrade .v { color: var(--upgrade); }
+  .stat.assembly .v { color: var(--assembly); }
+
+  main { max-width: 1180px; margin: 0 auto; padding: 34px 22px 90px; }
+
+  .hero { margin: 6px 0 34px; }
+  .kicker {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--g500); margin-bottom: 10px;
+  }
+  h1 {
+    font-family: var(--serif); font-weight: 500; letter-spacing: -0.025em;
+    font-size: clamp(30px, 4.4vw, 46px); line-height: 1.1; margin: 0 0 14px;
+  }
+  h1 em { font-style: italic; color: var(--clay); }
+  .lede { font-size: 16px; line-height: 1.62; color: var(--g700); max-width: 66ch; }
+  .lede b { color: var(--slate); font-weight: 600; }
+
+  h2 {
+    font-family: var(--serif); font-weight: 500; letter-spacing: -0.02em;
+    font-size: 24px; margin: 46px 0 4px;
+  }
+  .h2sub { color: var(--g500); font-size: 13px; margin: 0 0 18px; max-width: 72ch; }
+
+  /* headline figures */
+  .figs {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 1px; background: var(--g200); border: var(--border); border-radius: 10px;
+    overflow: hidden; margin: 26px 0 6px;
+  }
+  .fig { background: var(--paper); padding: 18px 20px 16px; }
+  .fig .k {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--g500);
+  }
+  .fig .v {
+    font-family: var(--serif); font-size: 34px; font-weight: 500;
+    letter-spacing: -0.03em; line-height: 1.1; margin-top: 5px;
+    font-variant-numeric: tabular-nums;
+  }
+  .fig.repair .v { color: var(--repair); }
+  .fig.upgrade .v { color: var(--upgrade); }
+  .fig.assembly .v { color: var(--assembly); }
+  .fig .n { color: var(--g500); font-size: 12px; margin-top: 5px; }
+  .note {
+    font-size: 12px; color: var(--g500); margin: 10px 2px 0; max-width: 78ch;
+  }
+  .note b { color: var(--g700); font-weight: 600; }
+
+  /* funnel */
+  .funnel { margin: 22px 0 6px; border: var(--border); border-radius: 10px; background: var(--paper); overflow: hidden; }
+  .fstep {
+    display: grid; grid-template-columns: 190px 1fr 130px;
+    align-items: center; gap: 14px; padding: 11px 18px; border-bottom: var(--border);
+  }
+  .fstep:last-child { border-bottom: 0; }
+  .fstep .fl { font-size: 13px; }
+  .fstep .fl small { display: block; color: var(--g500); font-size: 11px; line-height: 1.35; }
+  .fbar { height: 13px; background: var(--g100); border-radius: 3px; overflow: hidden; }
+  .fbar span { display: block; height: 100%; background: var(--oat); }
+  .fstep.on .fbar span { background: var(--clay); }
+  .fstep.off .fbar span { background: var(--g300); }
+  .fstep .fn {
+    font-family: var(--mono); font-size: 12px; text-align: right;
+    font-variant-numeric: tabular-nums; color: var(--g700);
+  }
+  .fstep .fn b { color: var(--slate); font-weight: 600; }
+
+  /* brand table */
+  .tablewrap { border: var(--border); border-radius: 10px; overflow: hidden; background: var(--paper); }
+  /* its own scroll box, so the sticky <thead> sticks to the table rather than
+     colliding with the sticky page header at top:0 */
+  .tscroll { overflow: auto; max-height: min(74vh, 860px); }
+  table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+  thead th {
+    position: sticky; top: 0; background: var(--g100); z-index: 2;
+    font-family: var(--mono); font-size: 10px; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--g500); font-weight: 500;
+    text-align: right; padding: 9px 12px; white-space: nowrap;
+    border-bottom: var(--border); cursor: pointer; user-select: none;
+  }
+  thead th:first-child { text-align: left; }
+  thead th:hover { color: var(--clay-d); }
+  thead th[aria-sort] { color: var(--slate); }
+  thead th .car { opacity: 0; font-size: 9px; }
+  thead th[aria-sort] .car { opacity: 1; }
+  tbody td {
+    padding: 9px 12px; text-align: right; border-bottom: 1px solid var(--g100);
+    white-space: nowrap; font-size: 13px;
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody tr:hover { background: var(--ivory); }
+  td.name { text-align: left; }
+  td.name a {
+    font-family: var(--serif); font-size: 16px; text-decoration: none;
+    color: var(--slate); letter-spacing: -0.01em;
+  }
+  td.name a:hover { color: var(--clay-d); text-decoration: underline; }
+  td.name .models { display: block; color: var(--g500); font-size: 11px; font-family: var(--sans); }
+  td.money { font-family: var(--mono); font-size: 12px; }
+  td.repair { color: var(--repair); }
+  td.upgrade { color: var(--upgrade); }
+  td.assembly { color: var(--assembly); }
+  .minibar {
+    display: block; height: 3px; background: var(--g100); border-radius: 2px;
+    margin-top: 4px; overflow: hidden;
+  }
+  .minibar span { display: block; height: 100%; background: var(--repair); opacity: .5; }
+  .rate { color: var(--g700); }
+  .dim { color: var(--g300); }
+
+  /* dollar head — the rows worth verifying by hand */
+  .head { border: var(--border); border-radius: 10px; background: var(--paper); overflow: hidden; }
+  .hrow {
+    display: grid; grid-template-columns: 92px 1fr 116px 132px;
+    gap: 14px; align-items: center; padding: 10px 16px;
+    border-bottom: 1px solid var(--g100); text-decoration: none; color: inherit;
+  }
+  .hrow:last-child { border-bottom: 0; }
+  .hrow:hover { background: var(--ivory); }
+  .hthumbs { display: flex; gap: 4px; }
+  .hthumbs img {
+    width: 44px; height: 44px; object-fit: cover; border-radius: 5px;
+    background: var(--g100); border: 1px solid var(--g200);
+  }
+  .hrow .ht { font-size: 13.5px; line-height: 1.35; }
+  .hrow .hs { color: var(--g500); font-size: 11.5px; margin-top: 2px; }
+  .hrow .hs b { color: var(--g700); font-weight: 500; }
+  .hmath {
+    font-family: var(--mono); font-size: 11px; color: var(--g500);
+    text-align: right; font-variant-numeric: tabular-nums;
+  }
+  .htot {
+    font-family: var(--serif); font-size: 19px; text-align: right;
+    font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
+  }
+  .htot.repair { color: var(--repair); }
+  .htot.assembly { color: var(--assembly); }
+  .htot.upgrade { color: var(--upgrade); }
+  .htot small { display: block; font-family: var(--mono); font-size: 9.5px;
+    letter-spacing: .09em; text-transform: uppercase; color: var(--g500); }
+  .cum {
+    display: flex; align-items: center; gap: 10px; padding: 11px 16px;
+    background: var(--g100); border-bottom: var(--border);
+    font-size: 12px; color: var(--g700);
+  }
+  .cum .cbar { flex: 1; height: 6px; background: var(--g200); border-radius: 3px; overflow: hidden; min-width: 80px; }
+  .cum .cbar span { display: block; height: 100%; background: var(--clay); }
+
+  .tabletools {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 11px 14px; border-bottom: var(--border); background: var(--paper);
+  }
+  input[type="search"] {
+    font: inherit; font-size: 13px; padding: 6px 11px; border: var(--border);
+    border-radius: 999px; background: var(--ivory); color: var(--slate);
+    min-width: 220px; flex: 1 1 220px; max-width: 340px;
+  }
+  input[type="search"]:focus { outline: 2px solid var(--oat); outline-offset: 1px; }
+  .tcount { font-family: var(--mono); font-size: 11px; color: var(--g500); margin-left: auto; }
+
+  details.box {
+    border: var(--border); border-radius: 10px; background: var(--paper);
+    padding: 0; margin: 26px 0 0;
+  }
+  details.box > summary {
+    cursor: pointer; padding: 13px 18px; list-style: none;
+    display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+  }
+  details.box > summary::-webkit-details-marker { display: none; }
+  details.box > summary::after { content: "▾"; color: var(--g500); margin-left: auto; font-size: 11px; }
+  details.box[open] > summary::after { content: "▴"; }
+  details.box > summary .stitle { font-family: var(--serif); font-size: 16px; }
+  details.box > summary .sdigest { color: var(--g500); font-size: 12px; }
+  .boxbody { padding: 2px 18px 18px; max-width: 78ch; }
+  .boxbody p { margin: 0 0 11px; font-size: 13.5px; line-height: 1.62; color: var(--g700); }
+  .boxbody b { color: var(--slate); }
+  .boxbody code {
+    font-family: var(--mono); font-size: 12px; background: var(--g100);
+    padding: 1px 5px; border-radius: 4px;
+  }
+  .hrepair { color: var(--repair); font-weight: 600; }
+  .hupgrade { color: var(--upgrade); font-weight: 600; }
+  .hassembly { color: var(--assembly); font-weight: 600; }
+
+  footer {
+    margin-top: 54px; padding-top: 18px; border-top: var(--border);
+    color: var(--g500); font-size: 12px; line-height: 1.6;
+  }
+  @media (max-width: 720px) {
+    .fstep { grid-template-columns: 1fr; gap: 6px; }
+    .fstep .fn { text-align: left; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+  <header class="top">
+    <div class="top-row">
+      <div class="brand">Printable car parts &mdash; <em>savings</em></div>
+      <a class="allhref" href="all.html">Browse all 9,190 &rarr;</a>
+      <div class="stat repair"><div class="k">Repair</div><div class="v" id="h-repair">-</div></div>
+      <div class="stat assembly"><div class="k">Assembly-only</div><div class="v" id="h-assembly">-</div></div>
+      <div class="stat upgrade"><div class="k">Upgrade</div><div class="v" id="h-upgrade">-</div></div>
+      <div class="stat"><div class="k">Things</div><div class="v" id="h-things">-</div></div>
+    </div>
+  </header>
+
+  <main>
+    <div class="hero">
+      <div class="kicker">9,190 Things · 78 brands · 3.2M downloads</div>
+      <h1>What it saves to <em>print</em> the part instead of buying it</h1>
+      <p class="lede" id="lede"></p>
+    </div>
+
+    <div class="figs" id="figs"></div>
+    <p class="note" id="fignote"></p>
+
+    <h2>How 9,190 Things become a dollar figure</h2>
+    <p class="h2sub">Every stage below is a filter, and each one only ever removes rows. The
+      number at the bottom is what survived all of them.</p>
+    <div class="funnel" id="funnel"></div>
+
+    <h2>The rows worth checking first</h2>
+    <p class="h2sub">Savings are concentrated, so a review is not a census. These are the
+      biggest counted rows in the whole corpus &mdash; click one to open it on its brand page,
+      already expanded, with both photos side by side.</p>
+    <div class="head" id="head"></div>
+
+    <h2>Every Thing in one list</h2>
+    <p class="h2sub">The brand pages below split the corpus 78 ways so each owns a small
+      state blob. If you would rather scan the whole thing at once &mdash;
+      <a href="all.html">all 9,190 rows in a single list</a>, counted and uncounted
+      together, sortable and searchable, each row opening on its brand page to decide.</p>
+
+    <h2>By brand</h2>
+    <p class="h2sub">Click a brand to open its review page &mdash; the printed part next to the
+      eBay listing it was priced against, with a veto on every row. Sort by any column.</p>
+    <div class="tablewrap">
+      <div class="tabletools">
+        <input type="search" id="q" placeholder="Search brand…" aria-label="Search brands">
+        <span class="tcount" id="tcount"></span>
+      </div>
+      <div class="tscroll">
+        <table id="tbl">
+          <thead><tr id="thead"></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <details class="box" id="howbox">
+      <summary>
+        <span class="stitle">How this works</span>
+        <span class="sdigest">the pipeline behind every row, and what a review click changes</span>
+      </summary>
+      <div class="boxbody">
+        <p><b>One row per Thing.</b> Each is a printable car part published on Thingiverse.
+        The pipeline classified it, wrote a part query, searched eBay, and a strict
+        two-stage matcher (candidate matching, then a photos-both-sides judge) kept a
+        listing only when it shows the same physical part.</p>
+        <p><b>The arithmetic.</b> A counted row saves
+        <code>(item price &minus; print cost) &times; downloads</code>, clamped at zero.
+        The print cost is a real headless <b>OrcaSlicer</b> slice of the Thing's own STL
+        &mdash; grams and hours at the page's recommended infill &mdash; not a flat
+        placeholder. Prices are the <b>item only</b>; shipping is recorded per listing and
+        reported as a separate sensitivity, never added into the headline.</p>
+        <p><b>Three buckets, never summed together.</b>
+        <span class="hrepair">Repair</span> is the main claim &mdash; a spare part you print
+        instead of rebuying. <span class="hassembly">Assembly-only</span> is the subset whose
+        part is not sold on its own, so the alternative was buying the whole assembly; it is
+        the same repair story but a weaker comparison, so it is broken out.
+        <span class="hupgrade">Upgrade</span> is an accessory printed instead of bought
+        &mdash; a different claim, reported alongside and never added in. Toys and decor are
+        excluded at $0.</p>
+        <p><b>A broken scale is not a saving.</b> The slicer is faithful: an STL
+        exported at the wrong scale slices to a fraction of a gram, which would book
+        almost the whole listing price as profit. The pipeline already refuses parts
+        that slice <em>too big</em> for a consumer bed; a matching floor refuses rows
+        whose price per printed gram is impossible &mdash; a 0.2&nbsp;g spoiler, a
+        0.2&nbsp;g cupholder. Those rows keep their price, listing and reasoning, but
+        carry $0 and are marked <code>excluded_scale</code>.</p>
+        <p><b>Uncounted rows are not failures.</b> About half of these parts have no
+        equivalent single listing on eBay &mdash; they are sold only inside a complete
+        assembly, or they are bespoke/modified pieces with no commercial equivalent. Those
+        rows contribute $0 and the brand page shows the candidate pool the matcher refused,
+        so a reviewer can rescue one by picking the listing that really is the same part.</p>
+        <p><b>Review changes the number live.</b> Each brand page saves its decisions on the
+        server, so every reviewer sees the same queue. Vetoing a row removes its dollars;
+        rescuing an uncounted row adds them. <code>apply_review.py</code> folds those
+        decisions back into a reviewed CSV that this page rebuilds from.</p>
+      </div>
+    </details>
+
+    <footer id="foot"></footer>
+  </main>
+
+<script id="payload" type="application/json"> /* PAYLOAD */ </script>
+<script>
+(function () {
+  var DATA = JSON.parse(document.getElementById("payload").textContent);
+  var M = DATA.meta, BRANDS = DATA.brands;
+
+  function usd(n) {
+    n = Math.round(n || 0);
+    if (Math.abs(n) >= 1e6) return "$" + (n / 1e6).toFixed(n >= 1e7 ? 1 : 2) + "M";
+    if (Math.abs(n) >= 1e4) return "$" + Math.round(n / 1e3) + "k";
+    return "$" + n.toLocaleString("en-US");
+  }
+  function usdFull(n) { return "$" + Math.round(n || 0).toLocaleString("en-US"); }
+  function num(n) { return (n || 0).toLocaleString("en-US"); }
+  function pct(a, b) { return b ? (100 * a / b).toFixed(1) + "%" : "—"; }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  // ---- header + headline figures ------------------------------------------
+  document.getElementById("h-repair").textContent = usd(M.repairTotal);
+  document.getElementById("h-assembly").textContent = usd(M.assemblyTotal);
+  document.getElementById("h-upgrade").textContent = usd(M.upgradeTotal);
+  document.getElementById("h-things").textContent = num(M.things);
+
+  document.getElementById("lede").innerHTML =
+    "<b>" + num(M.things) + " printable car parts</b> across <b>" + num(BRANDS.length) +
+    " brands</b>, downloaded <b>" + num(M.downloads) + "</b> times. The pipeline priced " +
+    num(M.counted) + " of them against a real eBay listing it could verify by photo, and " +
+    "sliced " + pct(M.sliced, M.things) + " of them on a real slicer for the print cost. " +
+    "What those prints saved, if every download became one print:";
+
+  var figs = [
+    { c: "repair",   k: "Repair savings",       v: usdFull(M.repairTotal),
+      n: num(M.repairN) + " spare parts · the main claim" },
+    { c: "assembly", k: "Assembly-only",        v: usdFull(M.assemblyTotal),
+      n: num(M.assemblyN) + " parts sold only inside an assembly" },
+    { c: "upgrade",  k: "Upgrade savings",      v: usdFull(M.upgradeTotal),
+      n: num(M.upgradeN) + " accessories · reported separately" },
+    { c: "",         k: "Verified matches",     v: pct(M.counted, M.priceable),
+      n: num(M.counted) + " of " + num(M.priceable) + " priceable rows" },
+    { c: "",         k: "Real slices",          v: pct(M.sliced, M.things),
+      n: num(M.sliced) + " OrcaSlicer print costs" }
+  ];
+  document.getElementById("figs").innerHTML = figs.map(function (f) {
+    return '<div class="fig ' + f.c + '"><div class="k">' + esc(f.k) + "</div>" +
+           '<div class="v">' + esc(f.v) + "</div>" +
+           '<div class="n">' + esc(f.n) + "</div></div>";
+  }).join("");
+
+  document.getElementById("fignote").innerHTML =
+    "Repair and upgrade are different claims and are never added together. " +
+    "Assembly-only is a subset of repair, already included in the repair figure and " +
+    "broken out so it can be removed. Median saving per print: " + usdFull(M.medianSpp) +
+    "; the top " + num(M.headN) + " rows carry " + M.headShare + "% of the repair total." +
+    (M.scaleN ? " <b>" + num(M.scaleN) + " matched rows were excluded</b> (" +
+      usdFull(M.scaleUsd) + ") because their STL slices too light to be the part it was " +
+      "priced against — a 0.2 g spoiler is a broken export, not a cheap print." : "");
+
+  // ---- funnel --------------------------------------------------------------
+  var F = M.funnel, top = F[0].n;
+  document.getElementById("funnel").innerHTML = F.map(function (s) {
+    return '<div class="fstep ' + (s.on ? "on" : "off") + '">' +
+      '<div class="fl">' + esc(s.label) + "<small>" + esc(s.why) + "</small></div>" +
+      '<div class="fbar"><span style="width:' + (100 * s.n / top).toFixed(2) + '%"></span></div>' +
+      '<div class="fn"><b>' + num(s.n) + "</b> " + (s.n === top ? "" : "· " + pct(s.n, top)) +
+      "</div></div>";
+  }).join("");
+
+  // ---- dollar head ---------------------------------------------------------
+  var HEAD = M.head || [];
+  // api/img.js reads `url` — not `u`. A wrong name silently serves nothing.
+  function proxy(u) { return u ? "/api/img?url=" + encodeURIComponent(u) : ""; }
+  var headSum = HEAD.reduce(function (a, r) { return a + r.tot; }, 0);
+  var allSum = M.repairTotal + M.assemblyTotal + M.upgradeTotal;
+  document.getElementById("head").innerHTML =
+    '<div class="cum"><span>These <b>' + HEAD.length + '</b> rows carry <b>' +
+      usdFull(headSum) + "</b> &mdash; " + pct(headSum, allSum) +
+      " of every dollar on this page</span>" +
+      '<span class="cbar"><span style="width:' + (100 * headSum / (allSum || 1)).toFixed(1) + '%"></span></span>' +
+      "<span>" + pct(HEAD.length, M.counted) + " of counted rows</span></div>" +
+    HEAD.map(function (r) {
+      var sub = [r.part, [r.br, r.mdl].filter(Boolean).join(" ")].filter(Boolean);
+      return '<a class="hrow" href="' + esc(r.href) + '">' +
+        '<div class="hthumbs">' +
+          '<img loading="lazy" alt="printed part" src="' + esc(proxy(r.ti)) + '">' +
+          '<img loading="lazy" alt="eBay listing" src="' + esc(proxy(r.li)) + '">' +
+        "</div>" +
+        '<div><div class="ht">' + esc(r.t) + "</div>" +
+          '<div class="hs">' + esc(sub.join(" · ")) + "</div></div>" +
+        '<div class="hmath">' + usdFull(r.p) + " listed<br>" +
+          "$" + r.spp.toFixed(2) + " × " + num(r.dl) + "</div>" +
+        '<div class="htot ' + esc(r.bkt) + '">' + usdFull(r.tot) +
+          "<small>" + esc(r.bkt) + "</small></div>" +
+        "</a>";
+    }).join("");
+
+  // ---- brand table ---------------------------------------------------------
+  var COLS = [
+    { k: "name",     t: "Brand",        cls: "name",              get: function (b) { return b.name; } },
+    { k: "things",   t: "Things",       get: function (b) { return b.things; } },
+    { k: "counted",  t: "Counted",      get: function (b) { return b.counted; } },
+    { k: "rate",     t: "Match rate",   get: function (b) { return b.priceable ? b.counted / b.priceable : 0; } },
+    { k: "dl",       t: "Downloads",    get: function (b) { return b.dl; } },
+    { k: "repair",   t: "Repair $",     cls: "money repair",      get: function (b) { return b.repair; } },
+    { k: "assembly", t: "Assembly $",   cls: "money assembly",    get: function (b) { return b.assembly; } },
+    { k: "upgrade",  t: "Upgrade $",    cls: "money upgrade",     get: function (b) { return b.upgrade; } }
+  ];
+  var sortKey = "repair", sortDir = -1, query = "";
+  var maxRepair = Math.max.apply(null, BRANDS.map(function (b) { return b.repair; }).concat([1]));
+
+  document.getElementById("thead").innerHTML = COLS.map(function (c) {
+    return '<th data-k="' + c.k + '" scope="col">' + esc(c.t) + ' <span class="car">▾</span></th>';
+  }).join("");
+
+  function cell(b, c) {
+    var v = c.get(b);
+    if (c.k === "name") {
+      return '<td class="name"><a href="' + esc(b.href) + '">' + esc(b.name) + "</a>" +
+        (b.models ? '<span class="models">' + esc(b.models) + "</span>" : "") + "</td>";
+    }
+    if (c.k === "rate") {
+      return '<td class="rate">' + (b.priceable ? pct(b.counted, b.priceable) : '<span class="dim">—</span>') + "</td>";
+    }
+    if (c.k === "repair") {
+      return '<td class="money repair">' + (v ? usdFull(v) : '<span class="dim">—</span>') +
+        '<span class="minibar"><span style="width:' + (100 * v / maxRepair).toFixed(2) + '%"></span></span></td>';
+    }
+    if (c.cls && c.cls.indexOf("money") === 0) {
+      return '<td class="' + c.cls + '">' + (v ? usdFull(v) : '<span class="dim">—</span>') + "</td>";
+    }
+    return "<td>" + num(v) + "</td>";
+  }
+
+  function render() {
+    var col = COLS.filter(function (c) { return c.k === sortKey; })[0] || COLS[5];
+    var rows = BRANDS.filter(function (b) {
+      return !query || b.name.toLowerCase().indexOf(query) >= 0 ||
+             (b.models || "").toLowerCase().indexOf(query) >= 0;
+    });
+    rows.sort(function (a, b) {
+      var x = col.get(a), y = col.get(b);
+      if (typeof x === "string") return sortDir * x.localeCompare(y);
+      return sortDir * (x - y) || a.name.localeCompare(b.name);
+    });
+    document.getElementById("tbody").innerHTML = rows.map(function (b) {
+      return "<tr>" + COLS.map(function (c) { return cell(b, c); }).join("") + "</tr>";
+    }).join("");
+    document.getElementById("tcount").textContent =
+      rows.length === BRANDS.length ? num(BRANDS.length) + " brands"
+                                    : num(rows.length) + " of " + num(BRANDS.length) + " brands";
+    Array.prototype.forEach.call(document.querySelectorAll("#thead th"), function (th) {
+      if (th.dataset.k === sortKey) th.setAttribute("aria-sort", sortDir < 0 ? "descending" : "ascending");
+      else th.removeAttribute("aria-sort");
+      var car = th.querySelector(".car");
+      if (car) car.textContent = sortDir < 0 ? "▾" : "▴";
+    });
+  }
+
+  document.getElementById("thead").addEventListener("click", function (e) {
+    var th = e.target.closest("th"); if (!th) return;
+    var k = th.dataset.k;
+    if (k === sortKey) sortDir = -sortDir;
+    else { sortKey = k; sortDir = k === "name" ? 1 : -1; }
+    render();
+  });
+  document.getElementById("q").addEventListener("input", function (e) {
+    query = e.target.value.trim().toLowerCase(); render();
+  });
+
+  document.getElementById("foot").innerHTML =
+    "Generated " + esc(M.generated) + " from " + esc(M.source) + ". " +
+    "Savings are the pipeline's own arithmetic: (item price − print cost) × downloads, " +
+    "clamped at zero, with the print cost from a real slice of the Thing's STL. " +
+    "Repair and upgrade are separate claims and are never summed.";
+
+  render();
+})();
+</script>
+</body>
+</html>

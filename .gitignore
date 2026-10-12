@@ -1,0 +1,26 @@
+# secrets: keys and browser cookies live only in .env
+.env
+.env.*
+!.env.example
+
+# run output: stage caches, downloaded models, tables, the built site
+cache/
+out/
+site/cars/
+*.stl
+*.3mf
+*.obj
+*.zip
+
+# site deploy
+node_modules/
+.vercel/
+
+# python
+__pycache__/
+.ruff_cache/
+*.pyc
+.venv/
+venv/
+
+.DS_Store
