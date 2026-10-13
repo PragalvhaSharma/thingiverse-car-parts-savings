@@ -96,8 +96,9 @@ class Settings:
     orca_api_token: str = ""
     orca_api_url: str = "http://127.0.0.1:13130"
     slice_timeout: float = 600.0
-    # Arithmetic and guards
-    pla_usd_per_kg: float = 25.0
+    # Arithmetic and guards. PLA: the paper's price, a 1 kg spool on Amazon.com on
+    # 13 October 2026 (Sep 2 used $25/kg).
+    pla_usd_per_kg: float = 13.99
     bed_mm: float = 256.0
     scale_usd_per_g: float = 100.0
     default_grams: float = 30.0
@@ -123,7 +124,7 @@ class Settings:
             orca_api_token=_env("ORCA_API_TOKEN"),
             orca_api_url=_env("ORCA_API_URL", default="http://127.0.0.1:13130").rstrip("/"),
             slice_timeout=_number("ORCA_SLICE_TIMEOUT", 600),
-            pla_usd_per_kg=_number("PLA_USD_PER_KG", 25),
+            pla_usd_per_kg=_number("PLA_USD_PER_KG", 13.99),
             bed_mm=_number("BED_MM", 256),
             scale_usd_per_g=_number("SCALE_USD_PER_G", 100),
             default_grams=_number("DEFAULT_GRAMS", 30),
@@ -132,5 +133,5 @@ class Settings:
 
     @property
     def default_print_cost(self) -> float:
-        """The flat fallback: DEFAULT_GRAMS of PLA (30 g at $25/kg = $0.75)."""
+        """The flat fallback: DEFAULT_GRAMS of PLA (30 g at $13.99/kg = $0.42)."""
         return round(self.default_grams * self.pla_usd_per_kg / 1000.0, 3)

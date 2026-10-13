@@ -5,7 +5,7 @@ orcaslicer-mcp connector (SLICER_BACKEND=mcp, the paper's setup) or straight
 through the slicer's Remote API, which is what the connector itself calls
 (SLICER_BACKEND=rest). Slicing uses the infill recommended on the Thing page and
 otherwise the slicer's standard settings. The plastic mass the slicer reports is
-priced at $25 per kg of PLA (savings.print_cost).
+priced at PLA_USD_PER_KG, $13.99 per kg of PLA by default (savings.print_cost).
 
 One printable unit is costed:
   * the files are the ones the classifier picked as one unit (all model files
@@ -19,7 +19,7 @@ One printable unit is costed:
 When a file cannot be sliced, its mass comes from its geometry instead (the
 estimator: a 1.2 mm shell plus infill, at PLA's 1.24 g/cm3). ms records the
 source: orcaslicer (every file sliced), mixed (some sliced, some estimated),
-estimator (none sliced), default (no usable file: the flat 30 g = $0.75).
+estimator (none sliced), default (no usable file: the flat 30 g, $0.42 at $13.99/kg).
 
 The longest side of any piece (mm, from an oriented bounding box) feeds the
 oversize guard in savings.finalize.

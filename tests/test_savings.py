@@ -67,7 +67,8 @@ class Finalize(unittest.TestCase):
     def test_print_cost(self):
         self.assertEqual(savings.print_cost(30, 25), 0.75)
         self.assertEqual(savings.print_cost(17.24, 25), 0.431)
-        self.assertEqual(Settings().default_print_cost, 0.75)  # the flat 30 g fallback
+        self.assertEqual(Settings().default_print_cost, 0.42)  # the flat 30 g fallback at $13.99/kg
+        self.assertEqual(Settings(pla_usd_per_kg=25).default_print_cost, 0.75)  # at Sep 2's $25/kg
 
 
 if __name__ == "__main__":

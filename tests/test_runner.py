@@ -188,7 +188,7 @@ class RunnerTest(unittest.TestCase):
         r = rows["101"]                                   # matched on eBay, counted
         self.assertEqual((r["src"], r["p"], r["surl"], r["lt"]),
                          ("eBay", 19.99, "https://www.ebay.com/itm/000000002", "Prius headlight wire cap"))
-        self.assertEqual((r["bkt"], r["ms"], r["pc"], r["spp"], r["tot"]), ("repair", "default", 0.75, 19.24, 1943.24))
+        self.assertEqual((r["bkt"], r["ms"], r["pc"], r["spp"], r["tot"]), ("repair", "default", 0.42, 19.57, 1976.57))
         self.assertEqual((r["now"], r["at"], [c["p"] for c in r["cands"]]), (1, "2026-10-10", [19.99, 25.0]))
         self.assertEqual((r["li"], r["mr"], r["jr"], r["qty"]),
                          ("https://i.ebayimg.com/images/g/IMG2/s-l500.webp", "1 is the same cap", "$19.99 is plausible.", 0))
@@ -197,7 +197,7 @@ class RunnerTest(unittest.TestCase):
 
         r = rows["102"]                                   # toy: classified, never searched
         self.assertEqual((r["cls"], r["ms"], r["pc"], r["src"], r["tier"], r["q"], r["bkt"]),
-                         ("toy_decor_other", "skipped", 0.75, "", "", "", ""))
+                         ("toy_decor_other", "skipped", 0.42, "", "", "", ""))
         self.assertEqual(run.outcome(r), "toy")
 
         r = rows["103"]                                   # Thingiverse served its default tags
@@ -215,7 +215,7 @@ class RunnerTest(unittest.TestCase):
 
         r = rows["106"]                                   # eBay empty, DuckDuckGo priced it
         self.assertEqual((r["src"], r["p"], r["surl"], r["li"], r["cands"], r["now"], r["bkt"], r["tot"]),
-                         ("DuckDuckGo web", 33.0, "https://parts.example.com/clip", "", [], "", "repair", 3418.5))
+                         ("DuckDuckGo web", 33.0, "https://parts.example.com/clip", "", [], "", "repair", 3453.48))
 
         r = rows["107"]                                   # eBay empty, DuckDuckGo unreachable
         self.assertEqual((r["src"], r["jr"], r["cands"], r["bkt"]), ("none", UNMATCHED_JR, [], ""))
@@ -225,10 +225,10 @@ class RunnerTest(unittest.TestCase):
 
         r = rows["109"]                                   # the model call failed
         self.assertTrue(r["err"].startswith(LLM_ERROR_PREFIX))
-        self.assertEqual((r["pc"], r["ms"], run.outcome(r)), (0.75, "", "llm_error"))
+        self.assertEqual((r["pc"], r["ms"], run.outcome(r)), (0.42, "", "llm_error"))
 
         r = rows["110"]                                   # same query as 101: one eBay search
-        self.assertEqual((r["dl"], r["dl_src"], r["bkt"], r["tot"]), (777, "thingiverse", "repair", 14949.48))
+        self.assertEqual((r["dl"], r["dl_src"], r["bkt"], r["tot"]), (777, "thingiverse", "repair", 15205.89))
         self.assertEqual(calls.of("ebay").count(WIRE_CAP), 1)
         self.assertEqual(calls.of("web"), ["a clip nobody sells", "obscure clip only sold online"])
         self.assertEqual(calls.of("verify"), ["101", "104", "105", "106", "110"])

@@ -11,7 +11,7 @@ Each Thing goes through the paper's steps:
     search    ebay.py         step 3: the top 10 active eBay listings, cheapest first
               websearch.py    (DuckDuckGo, only when eBay has no listing at all)
     verify    verify.py       step 3: the matcher, then the judge
-    slice     slicing.py      step 4: grams from OrcaSlicer, priced at $25/kg of PLA
+    slice     slicing.py      step 4: grams from OrcaSlicer, priced at $13.99/kg of PLA
     savings   savings.py      step 5: the guards, saving per print, bucket
 
 Harvest to verify run in worker threads (--workers). There is one slicer, so
@@ -470,7 +470,7 @@ def main(argv=None) -> int:
     ap.add_argument("--workers", type=int, default=4, help="Things processed in parallel (default: 4)")
     ap.add_argument("--refresh", choices=STAGES, help="redo this stage and every stage after it")
     ap.add_argument("--skip-slice", action="store_true",
-                    help="no slicing or downloads: every print costs the flat default (30 g = $0.75)")
+                    help="no slicing or downloads: every print costs the flat default (30 g = $0.42)")
     ap.add_argument("--site", nargs="?", const="site/cars", help="also build the review site (default: site/cars)")
     ap.add_argument("--generated", help="date printed on the site (default: today)")
     ap.add_argument("--env-file", help="settings file (default: .env in the repo)")

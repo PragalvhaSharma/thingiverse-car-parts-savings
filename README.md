@@ -14,7 +14,7 @@ The live half is written to the paper, and every part of it has run live. On 12 
 | Steps 1 and 2 | `carsavings/classify.py` | One GPT-5.6 Luna call on the text and photos: spare part, accessory or toy/decor; the "not sold on its own" flag; the part's name; the pricing tier; the search query; and which files make up one printable unit. |
 | Step 3, retrieval | `carsavings/ebay.py`, `carsavings/websearch.py` | The top 10 active eBay listings in Best Match order, renumbered cheapest first. DuckDuckGo is the fallback, used only when eBay has no listing at all. |
 | Step 3, verification | `carsavings/verify.py` | The matcher (same physical part for the same vehicle, from both sides' photos), then the judge (is the price plausible for that part). Both reasons stay on the row. |
-| Step 4 | `carsavings/slicing.py` | Slices the Thing's own files in OrcaSlicer 2.4.2 through the orcaslicer-mcp connector, at the infill from the Thing's page. Grams are priced at $25/kg of PLA. |
+| Step 4 | `carsavings/slicing.py` | Slices the Thing's own files in OrcaSlicer 2.4.2 through the orcaslicer-mcp connector, at the infill from the Thing's page. Grams are priced at $13.99/kg of PLA (`PLA_USD_PER_KG`). |
 | Step 5 | `carsavings/savings.py` | The checks (scale guard at $100 per gram, bed size 256 mm, judge refusals, multi-unit flag), then saving per print = round(max(price − print cost, 0), 2), total = round(saving × downloads, 2), and the bucket: repair, assembly-only or upgrade. The three buckets are never added together. |
 | Review page | `carsavings/site.py`, `carsavings/templates/`, `site/api/` | The overview, the all-rows list and the 78 brand pages, plus the decision store and image proxy that ran on Vercel. |
 | Review merge | `script/apply_review.py` | Folds reviewers' decisions back into a new table; the original is never overwritten. |
@@ -55,10 +55,10 @@ The doctor prints PASS, WARN or FAIL for each setting with what to fix, and neve
 
 ### OrcaSlicer (step 4)
 
-Skip this section for a first test, because `--skip-slice` prices every print at the flat $0.75 default. To slice:
+Skip this section for a first test, because `--skip-slice` prices every print at the flat $0.42 default. To slice:
 
 1. Install the OrcaSlicer MCP build (OrcaSlicer 2.4.2 with the Remote API) from github.com/MaxEllis/OrcaSlicer/releases; on a Mac that is `OrcaSlicer-MCP-2.4.2-mcp.12-macos-universal.dmg` or later. The build is not notarized, so if macOS blocks its first launch (it does when a browser downloaded the file), open System Settings → Privacy & Security and click Open Anyway.
-2. On first launch, pick the printer, process and filament you slice with. The connector slices with whatever presets are active, so the grams depend on them; the pipeline sets only the infill, per Thing. The paper names no profile. This rebuild was tested with Bambu Lab X1 Carbon 0.4 nozzle, `0.20mm Standard @BBL X1C` (15% infill) and `Bambu PLA Basic @BBL X1C`: the X1 Carbon's own defaults, on the 256 mm bed that `BED_MM` assumes, with a filament profile priced at $24.99/kg, which matches the paper's $25/kg.
+2. On first launch, pick the printer, process and filament you slice with. The connector slices with whatever presets are active, so the grams depend on them; the pipeline sets only the infill, per Thing. The paper names no profile. This rebuild was tested with Bambu Lab X1 Carbon 0.4 nozzle, `0.20mm Standard @BBL X1C` (15% infill) and `Bambu PLA Basic @BBL X1C`: the X1 Carbon's own defaults, on the 256 mm bed that `BED_MM` assumes. The filament profile's own price is not used: the pipeline prices the grams at `PLA_USD_PER_KG`.
 3. In Preferences → Remote API, tick Enable, copy the Token into `ORCA_API_TOKEN`, and close Preferences; the server starts when Preferences closes. Leave Bind LAN off and the port at 13130, which is what `ORCA_API_URL` expects.
 4. Install uv, which provides `uvx`. The pipeline starts `uvx orcaslicer-mcp` itself. The slicer code was checked against orcaslicer-mcp 0.1.16: every tool it calls exists there with the same arguments and result fields.
 5. Run `python script/doctor.py` without `--skip-slicer`.
@@ -77,9 +77,9 @@ python script/compare_run.py
 python script/build_dashboard.py --csv out/cars_final.csv --out site/cars
 ```
 
-With OrcaSlicer set up as above, leave out `--skip-slice` and each Thing's own files are sliced, so the print costs come from the slicer instead of the flat $0.75.
+With OrcaSlicer set up as above, leave out `--skip-slice` and each Thing's own files are sliced, so the print costs come from the slicer instead of the flat $0.42.
 
-On 12 October 2026 the test ran live and sliced, with the X1 Carbon presets named in the OrcaSlicer section:
+On 12 October 2026 the test ran live and sliced, with the X1 Carbon presets named in the OrcaSlicer section and PLA at Sep 2's $25/kg:
 
 | Thing | Sep 2 result | 12 Oct 2026 |
 |---|---|---|
@@ -89,15 +89,15 @@ On 12 October 2026 the test ran live and sliced, with the X1 Carbon presets name
 | 5019865, Mazda 121 sun visor clip | not counted: no listing passed the matcher; 10 candidates kept for review | not counted, for the same reason |
 | 5770631, Jeep Christmas ornaments | toy/decor: never priced | toy/decor: never priced |
 
-With `--skip-slice`, every print costs the flat $0.75, so Sep 2's three listings would give $5,945.16, $1,885.52 and $375.82.
+With `--skip-slice`, every print costs the flat $0.42, so Sep 2's three listings would give $6,047.13, $1,917.86 and $383.41.
 
-`compare_run.py` prints each field next to its Sep 2 value. The class, the standalone flag, the tier and the bucket should mostly agree. On 12 October the class and the price source agreed for all five Things, and the standalone flag, the tier and the bucket for four. The Mustang moved to assembly-only because the classifier marked its tray as not sold on its own, and the matcher then accepted the whole console ashtray. Queries, listings and prices will drift, because eBay changes daily and the model is not deterministic. Print costs differ slightly too; see "Print profile" below.
+`compare_run.py` prints each field next to its Sep 2 value, with Sep 2's print cost and total re-priced at this run's PLA price. The class, the standalone flag, the tier and the bucket should mostly agree. On 12 October the class and the price source agreed for all five Things, and the standalone flag, the tier and the bucket for four. The Mustang moved to assembly-only because the classifier marked its tray as not sold on its own, and the matcher then accepted the whole console ashtray. Queries, listings and prices will drift, because eBay changes daily and the model is not deterministic. Print costs differ slightly too; see "Print profile" below.
 
 The pages in `site/cars/` open from disk with every number, but photos load through the deployment's `/api/img`, so they appear only once `site/` is deployed.
 
 Next steps up:
 
-- `--csv examples/sample_things.csv` runs 17 Things that cover every Sep 2 outcome: the scale guard, an oversize part, a judge refusal, a deleted Thing, the DuckDuckGo fallback, the flat default print cost and others. Run it with OrcaSlicer to test step 4. `examples/expected_sep2.json` holds the Sep 2 values that `compare_run.py` uses. On 12 October 2026 it ran live and sliced, with no model or other errors: six Things counted (assembly-only $7,905.08 from two parts, upgrade $127,888.63 from four), the deleted Thing was marked as deleted, and the bed-size guard stopped the Audi A2 cup holder (272 mm, as in Sep 2) and the Lotus Elise front splitter (1,400 mm; see "Rows at the flat default cost" below). The rest of the differences came from the model and from eBay. The MX-5 fender vent matched a $59.99 pair where Sep 2 had $150, and the Rivian tray, whose $13.49 Tesla Model Y listing Sep 2's judge refused, matched a $57.44 Rivian console tray. Three Things that Sep 2 matched found no accepted listing this time: the Ferrari carburetor spacer, which Sep 2 priced at $33 through DuckDuckGo (eBay returned ten listings this time, so the fallback did not run); the Alfa Romeo phone holder, $19.99 in Sep 2; and the NSX cup holder, which Sep 2 matched at $129.80 and then held out with the scale guard. Four changed class: the Toyota C-HR "mug", a divided insert that sits in a cup holder, went from toy/decor to accessory; the NSX wheels, which Sep 2 sliced at 0.60 g, went from spare part to toy/decor; and the NSX and Audi A2 cup holders went from spare parts to accessories. The Jeep bracket, whose photo made Sep 2's model call fail, was classified this time.
+- `--csv examples/sample_things.csv` runs 17 Things that cover every Sep 2 outcome: the scale guard, an oversize part, a judge refusal, a deleted Thing, the DuckDuckGo fallback, the flat default print cost and others. Run it with OrcaSlicer to test step 4. `examples/expected_sep2.json` holds the Sep 2 values that `compare_run.py` uses. On 12 October 2026 it ran live and sliced at $25/kg, with no model or other errors: six Things counted (assembly-only $7,905.08 from two parts, upgrade $127,888.63 from four), the deleted Thing was marked as deleted, and the bed-size guard stopped the Audi A2 cup holder (272 mm, as in Sep 2) and the Lotus Elise front splitter (1,400 mm; see "Rows at the flat default cost" below). The rest of the differences came from the model and from eBay. The MX-5 fender vent matched a $59.99 pair where Sep 2 had $150, and the Rivian tray, whose $13.49 Tesla Model Y listing Sep 2's judge refused, matched a $57.44 Rivian console tray. Three Things that Sep 2 matched found no accepted listing this time: the Ferrari carburetor spacer, which Sep 2 priced at $33 through DuckDuckGo (eBay returned ten listings this time, so the fallback did not run); the Alfa Romeo phone holder, $19.99 in Sep 2; and the NSX cup holder, which Sep 2 matched at $129.80 and then held out with the scale guard. Four changed class: the Toyota C-HR "mug", a divided insert that sits in a cup holder, went from toy/decor to accessory; the NSX wheels, which Sep 2 sliced at 0.60 g, went from spare part to toy/decor; and the NSX and Audi A2 cup holders went from spare parts to accessories. The Jeep bracket, whose photo made Sep 2's model call fail, was classified this time.
 - `--csv data/inputs/toyota_prius_parts.csv --limit 5` runs a few Things from the Toyota Prius sheet.
 - `--csv data/inputs/validated_matches_2026-08-13.csv --site` is the full Sep 2 corpus (9,190 Things). It takes days at the polite request rate. Stop it at any time; rerunning continues from the cache.
 
@@ -152,6 +152,7 @@ The 91 tests run offline in about three seconds. They cover the byte-identical S
 
 ## Known differences from the Sep 2 run
 
+- **PLA price.** Sep 2 priced plastic at $25/kg. The paper now uses $13.99/kg, the Amazon.com price of a 1 kg SUNLU PLA spool on 13 October 2026, so that is the default, and the flat 30 g default costs $0.42 instead of $0.75. `PLA_USD_PER_KG=25` gives Sep 2's print costs. The Sep 2 rebuild and its tests read Sep 2's stored print costs, so the price setting does not touch them.
 - **No price estimates.** Sep 2 counted two rows priced by a model estimate (6617133 and 5831802). The paper says parts without an accepted listing stay unknown at $0, so this code never estimates a price.
 - **Deleted or private Things.** Thingiverse serves its default page tags for these. Sep 2 marked 40 as errors but sent 16 more to the classifier, which called 13 of them toys and 3 accessories. This code marks all of them as errors at $0.
 - **Photos.** Every photo is converted to JPEG before it goes to the model. Sep 2's one model failure (6948073) was OpenAI rejecting an image format. Gallery photos are fetched through Thingiverse's own image resizer at up to 1,024 pixels a side, the largest size the model is sent anyway.
