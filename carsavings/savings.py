@@ -16,7 +16,8 @@ below it (1.95 - 0.465 is 1.48499..., which Python rounds to 1.48 while
 Math.round(148.5) gives 1.49), and 7 exact half cents, which Python rounds to the
 even cent.
 
-The three buckets are reported side by side and never added together:
+Every counted row lands in exactly one bucket, so the three totals add up
+without double counting:
 
     repair    a spare part you can buy on its own (the headline claim)
     assembly  a spare part sold only inside a larger assembly or kit
@@ -87,7 +88,7 @@ def is_counted(row: dict) -> bool:
 
 
 def totals(rows) -> dict:
-    """{bucket: (rows, dollars)} for the three buckets. They are reported side by side, never summed."""
+    """{bucket: (rows, dollars)} for the three buckets. No row is in two buckets, so they can be added."""
     out = {}
     for b in BUCKETS:
         picked = [r for r in rows if r.get("bkt") == b]

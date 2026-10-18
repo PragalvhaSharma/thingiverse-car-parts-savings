@@ -430,9 +430,12 @@ def summary(rows) -> str:
     lines = ["%d Things, %d counted. Downloads %s (%s on counted rows)."
              % (len(rows), len(counted), format(sum(r["dl"] for r in rows), ","),
                 format(sum(r["dl"] for r in counted), ","))]
-    for b, (k, total) in totals(rows).items():
+    t = totals(rows)
+    for b, (k, total) in t.items():
         lines.append("  %-9s %18s  %6s parts" % (b, money(total), format(k, ",")))
-    lines.append("  (three separate figures, never added together)")
+    # every counted row sits in exactly one bucket, so the three totals add up
+    lines.append("  %-9s %18s  %6s parts" % ("combined", money(sum(v[1] for v in t.values())),
+                                             format(sum(v[0] for v in t.values()), ",")))
     scale = [r for r in rows if r["bkt"] == SCALE_BUCKET]
     lines.append("not counted: no verified listing %d | judge refused %d | toys/decor %d"
                  % (n.get("unmatched", 0), n.get("refused", 0), n.get("toy", 0)))

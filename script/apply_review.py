@@ -279,7 +279,13 @@ def main(argv=None) -> int:
     for b in BUCKETS:
         print("%-9s %18s %7s %18s %7s" % (b, money(before[b][1]), "(%s)" % format(before[b][0], ","),
                                           money(after[b][1]), "(%s)" % format(after[b][0], ",")))
-    print("(three separate figures, never added together)\n")
+    # every counted row sits in exactly one bucket, so the three totals add up
+    print("%-9s %18s %7s %18s %7s" % ("combined",
+                                      money(sum(v[1] for v in before.values())),
+                                      "(%s)" % format(sum(v[0] for v in before.values()), ","),
+                                      money(sum(v[1] for v in after.values())),
+                                      "(%s)" % format(sum(v[0] for v in after.values()), ",")))
+    print()
     if counts:
         for action, n in sorted(counts.items()):
             print("  %-58s %6s" % (action, format(n, ",")))
