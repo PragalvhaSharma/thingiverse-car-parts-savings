@@ -6,7 +6,8 @@ Output layout (served under /cars/, next to site/api/state.js and img.js):
                             worth checking first, and the brand table
     cars/all.html           every row in one list, biggest dollars first
     cars/b/<slug>.html      one page per brand; review decisions are made here
-                            and stored per brand through /api/state?key=<slug>
+                            and stored per brand through /api/state?key=r2-<slug>
+                            (STATE_KEY; as_deployed keeps key=<slug>)
     cars/pools/<id>.json    candidate pools that all.html loads on demand
 
 The markup and JavaScript in templates/ are the deployed pages with their data
@@ -14,9 +15,11 @@ taken out. This module computes the JSON payload each page embeds, fills in the
 few numbers printed in static prose, and writes the files.
 
 By default the build corrects what the deployed pages got wrong: the overview's
-funnel (FUNNEL), the review pages' cent rounding, and the sentences and summed
-figures that contradict the paper (CORRECTIONS).
-With as_deployed=True it keeps the deployed funnel and wording, and the output
+funnel (FUNNEL), the review pages' cent rounding, the sentences and summed
+figures that contradict the paper and the tiles shown for a listing without a
+saved photo (CORRECTIONS), and the median saving per print (full_meta). It also
+gives the review state fresh keys (STATE_KEY).
+With as_deployed=True it keeps all of that as deployed, and the output
 built from the Sep 2 rows is byte-identical to the deployed pages;
 script/compare_sep2.py checks that.
 """
@@ -93,21 +96,77 @@ _CONTRIB_JS = (
     "  }\n",
 )
 
-# Text and figures of the deployed pages that contradict the paper, and their default
-# replacements. Each old text occurs exactly once in its template.
+# The review pages keep their decisions in one Vercel Blob per brand, read and written
+# through /api/state?key=..., and in the browser's localStorage. Deployed, the keys were
+# the brand slug and tv-review-decisions-v1-<slug> (tv-all-decisions-v1 on all.html).
+# The default build uses fresh keys (r2-<slug>, tv-review-decisions-r2-<slug> and
+# tv-all-decisions-r2), so its pages do not load the decisions saved on the Sep 2
+# pages, which stay under the old keys. script/apply_review.py --url reads the old keys.
+STATE_KEY = "r2"
+
+# Text and figures of the deployed pages that contradict the paper or show a listing
+# without its photo badly, and their default replacements; all.html's last four pairs
+# move it to the STATE_KEY keys. Each old text occurs exactly once in its template when
+# its pair is applied.
 CORRECTIONS = {
     "index": (
-        # the three buckets are disjoint; methods doc section 7, note 1
-        ('"Assembly-only is a subset of repair, already included in the repair figure and " +\n'
-         '    "broken out so it can be removed. Median saving per print: "',
-         '"Assembly-only is a third total, kept out of the repair figure: spare parts not " +\n'
-         '    "sold on their own, priced against the smallest unit that contains them. Median saving per print: "'),
-        ('<span class="hassembly">Assembly-only</span> is the subset whose\n'
+        # every counted part sits in exactly one bucket, so the three totals add up (the
+        # paper, step 5; methods doc section 7, note 1)
+        ('        <p><b>Three buckets, never summed together.</b>\n'
+         '        <span class="hrepair">Repair</span> is the main claim &mdash; a spare part you print\n'
+         '        instead of rebuying. <span class="hassembly">Assembly-only</span> is the subset whose\n'
          '        part is not sold on its own, so the alternative was buying the whole assembly; it is\n'
-         '        the same repair story but a weaker comparison, so it is broken out.',
-         '<span class="hassembly">Assembly-only</span> is a separate total for\n'
+         '        the same repair story but a weaker comparison, so it is broken out.\n'
+         '        <span class="hupgrade">Upgrade</span> is an accessory printed instead of bought\n'
+         '        &mdash; a different claim, reported alongside and never added in. Toys and decor are\n'
+         '        excluded at $0.</p>\n',
+         '        <p><b>Three buckets that add up.</b> Every counted part sits in exactly one bucket,\n'
+         '        so the three totals can be added without counting any part twice.\n'
+         '        <span class="hrepair">Repair</span> is the main claim: a spare part you print\n'
+         '        instead of rebuying. <span class="hassembly">Assembly-only</span> covers\n'
          '        parts not sold on their own, so the alternative was buying the whole assembly; it is\n'
-         '        the same repair story but a weaker comparison, so it is kept out of the repair figure.'),
+         '        the same repair story but a weaker comparison, so it is kept out of the repair figure.\n'
+         '        <span class="hupgrade">Upgrade</span> is an accessory printed instead of bought.\n'
+         '        Toys and decor are excluded at $0.</p>\n'),
+        ('    "Repair and upgrade are different claims and are never added together. " +\n'
+         '    "Assembly-only is a subset of repair, already included in the repair figure and " +\n'
+         '    "broken out so it can be removed. Median saving per print: " + usdFull(M.medianSpp) +\n',
+         '    "Every counted part sits in exactly one bucket, so the three totals add up to <b>" +\n'
+         '    usdFull(M.repairTotal + M.assemblyTotal + M.upgradeTotal) + "</b> across " + num(M.counted) +\n'
+         '    " parts. Assembly-only is kept out of the repair figure: spare parts not " +\n'
+         '    "sold on their own, priced against the smallest unit that contains them. '
+         'Median saving per print: " + usdc(M.medianSpp) +\n'),
+        ('      n: num(M.upgradeN) + " accessories · reported separately" },\n',
+         '      n: num(M.upgradeN) + " accessories printed instead of bought" },\n'),
+        ('    "Repair and upgrade are separate claims and are never summed.";\n',
+         '    "Every counted part sits in exactly one bucket, so the three totals can be added.";\n'),
+        # the median saving per print to the cent; usdFull rounds to whole dollars
+        ('  function usdFull(n) { return "$" + Math.round(n || 0).toLocaleString("en-US"); }\n',
+         '  function usdFull(n) { return "$" + Math.round(n || 0).toLocaleString("en-US"); }\n'
+         '  function usdc(n) { return "$" + (n || 0).toLocaleString("en-US", '
+         '{minimumFractionDigits: 2, maximumFractionDigits: 2}); }\n'),
+        # a counted row can also be priced on DuckDuckGo or in review; give the eBay share
+        ('num(M.counted) + " of them against a real eBay listing it could verify by photo, and " +\n',
+         'num(M.counted) + " of them against a listing it could verify by photo (" +\n'
+         '    pct(M.ebayN, M.counted) + " on eBay), and " +\n'),
+        # a listing swapped in during review has a link but no saved photo, which the rows
+        # worth checking first showed as a broken <img src="">; show a "no photo" tile
+        ("  .hthumbs img {\n"
+         "    width: 44px; height: 44px; object-fit: cover; border-radius: 5px;\n"
+         "    background: var(--g100); border: 1px solid var(--g200);\n"
+         "  }\n",
+         "  .hthumbs img {\n"
+         "    width: 44px; height: 44px; object-fit: cover; border-radius: 5px;\n"
+         "    background: var(--g100); border: 1px solid var(--g200);\n"
+         "  }\n"
+         "  .hthumbs .hnoimg {\n"
+         "    width: 44px; height: 44px; border-radius: 5px; display: grid; place-items: center;\n"
+         "    background: var(--g100); border: 1px solid var(--g200); color: var(--g500);\n"
+         "    font-family: var(--mono); font-size: 8px; line-height: 1.2; text-align: center;\n"
+         "  }\n"),
+        ("          '<img loading=\"lazy\" alt=\"eBay listing\" src=\"' + esc(proxy(r.li)) + '\">' +\n",
+         "          (r.li ? '<img loading=\"lazy\" alt=\"eBay listing\" src=\"' + esc(proxy(r.li)) + '\">'\n"
+         "                : '<span class=\"hnoimg\">no<br>photo</span>') +\n"),
         # shipping is kept on each candidate listing, and no with-shipping figure exists
         ("shipping is recorded per listing and\n"
          "        reported as a separate sensitivity, never added into the headline.",
@@ -133,7 +192,8 @@ CORRECTIONS = {
          '        by its classification. Prices are the item only — shipping is never added.</p>'),
         ("clamped at zero. Prices are the item only — shipping is reported separately. ",
          "clamped at zero. Prices are the item only — shipping is never added. "),
-        # the three totals are never combined into one figure (paper, step 5)
+        # each bucket on its own, with the combined total on the overview; the review
+        # report's headline and its combined_total added repair and upgrade only
         ('"<b>" + usd(s.repair + s.assembly + s.upgrade) + "</b> total · net " + fmtDelta(s.net) +',
          '"Net <b>" + fmtDelta(s.net) + "</b>" +'),
         ('        srow("Combined", usd(s.repair + s.assembly + s.upgrade) +\n'
@@ -150,8 +210,20 @@ CORRECTIONS = {
         _CONTRIB_JS,
         ("usdc(shownP ? Math.round(Math.max(shownP - r.pc, 0) * 100) / 100 : r.spp)",
          "usdc(shownP ? round2(Math.max(shownP - r.pc, 0)) : r.spp)"),
-        ('num(counted) + " counted &middot; " + usd(rep + asm + upg) + " total";',
-         'num(counted) + " counted";'),
+        # a listing swapped in during review has a link (surl) but no saved photo
+        ('thumb(listImg(r.li), "eBay listing", "no<br>listing") +',
+         'thumb(listImg(r.li), "eBay listing", r.surl ? "no<br>photo" : "no<br>listing") +'),
+        (": '<div class=\"none\">no matched listing</div>') +",
+         ": '<div class=\"none\">' + (swapped || r.surl ? \"no listing photo saved\" : \"no matched listing\")"
+         " + \"</div>\") +"),
+        # the STATE_KEY keys, the same blobs as the brand pages
+        ("/api/state?key=<brand slug>, decisions keyed",
+         "/api/state?key=%s-<brand slug>, decisions keyed" % STATE_KEY),
+        ('var LOCAL = "tv-all-decisions-v1";', 'var LOCAL = "tv-all-decisions-%s";' % STATE_KEY),
+        ('return fetch("/api/state?key=" + encodeURIComponent(slug), {cache: "no-store"})',
+         'return fetch("/api/state?key=%s-" + encodeURIComponent(slug), {cache: "no-store"})' % STATE_KEY),
+        ('    fetch("/api/state?key=" + encodeURIComponent(slug), {\n',
+         '    fetch("/api/state?key=%s-" + encodeURIComponent(slug), {\n' % STATE_KEY),
     ),
 }
 
@@ -317,8 +389,12 @@ def full_meta(rows, slug_of, generated, source, as_deployed=False) -> dict:
     m["downloads"] = sum(r["dl"] for r in rows)
     m["priceable"] = sum(1 for r in rows if is_priceable(r))
     m["sliced"] = sum(1 for r in rows if r["ms"] in ("orcaslicer", "mixed"))
-    spp = [r["spp"] for r in counted if r["spp"] > 0]
+    # the median over every counted row, as the paper takes it; deployed, it left out the
+    # rows with no saving
+    spp = [r["spp"] for r in counted if r["spp"] > 0 or not as_deployed]
     m["medianSpp"] = round(statistics.median(spp), 2) if spp else 0
+    if not as_deployed:
+        m["ebayN"] = sum(1 for r in counted if r["src"] == "eBay")
     m["headN"], m["headShare"] = _head_share(counted)
     scale = [r for r in rows if r["sx"]]
     m["funnel"] = _funnel(rows, m["things"], m["priceable"], len(scale), m["counted"], as_deployed)
@@ -360,6 +436,8 @@ def render_brand(name, slug, rows, generated, as_deployed=False) -> str:
     models = {r["mdl"] for r in rows if r["mdl"]}
     label = html.escape(name, quote=False)
     meta = core_meta(rows, generated)
+    key = slug if as_deployed else "%s-%s" % (STATE_KEY, slug)
+    local = "v1-" + slug if as_deployed else key
     page = _swap(_corrected(_template("brand"), "brand", as_deployed), [
         ("<title>Mazda — printable parts vs. eBay</title>",
          "<title>%s — printable parts vs. eBay</title>" % label),
@@ -367,8 +445,8 @@ def render_brand(name, slug, rows, generated, as_deployed=False) -> str:
          '<div class="brand">%s <em>parts</em></div><div class="sub">%d things · %d models</div>'
          % (label, len(rows), len(models))),
         ("<b>56 of 110</b> rows.", "<b>%d of %d</b> rows." % (meta["counted"], meta["things"])),
-        ('var STATE_URL = "/api/state?key=mazda";', 'var STATE_URL = "/api/state?key=%s";' % slug),
-        ('var KEY = "tv-review-decisions-v1-mazda";', 'var KEY = "tv-review-decisions-v1-%s";' % slug),
+        ('var STATE_URL = "/api/state?key=mazda";', 'var STATE_URL = "/api/state?key=%s";' % key),
+        ('var KEY = "tv-review-decisions-v1-mazda";', 'var KEY = "tv-review-decisions-%s";' % local),
     ], "brand")
     return embed(page, "brand", {"meta": {k: meta[k] for k in BRAND_META_KEYS},
                                  "rows": [brand_row(r) for r in rows]})

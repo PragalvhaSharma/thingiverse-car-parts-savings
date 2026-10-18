@@ -48,8 +48,11 @@ def main(argv=None) -> int:
                            pool_prose_count=a.pool_prose_count, as_deployed=a.as_deployed)
     print("built %(out)s: %(things)d things, %(counted)d counted, %(brands)d brand pages, "
           "%(pools)d pools" % info)
-    print("repair $%s · assembly $%s · upgrade $%s (never summed)"
-          % (format(info["repair"], ",.2f"), format(info["assembly"], ",.2f"), format(info["upgrade"], ",.2f")))
+    # every counted row sits in exactly one bucket, so the three totals add up
+    total = info["repair"] + info["assembly"] + info["upgrade"]
+    print("repair $%s · assembly $%s · upgrade $%s · combined $%s"
+          % (format(info["repair"], ",.2f"), format(info["assembly"], ",.2f"), format(info["upgrade"], ",.2f"),
+             format(total, ",.2f")))
     return 0
 
 

@@ -56,10 +56,14 @@ class Sep2(unittest.TestCase):
 
     def test_default_build_corrects_the_funnel_and_the_text(self):
         slugs = site.assign_slugs(sorted({r["br"] for r in self.rows}))
-        funnel = site.full_meta(self.rows, slugs.__getitem__, "2026-09-02", "x")["funnel"]
-        deployed = site.full_meta(self.rows, slugs.__getitem__, "2026-09-02", "x", as_deployed=True)["funnel"]
-        self.assertEqual([s["n"] for s in funnel], [9190, 8985, 8962, 4552, 4328])
-        self.assertEqual([s["n"] for s in deployed], [9190, 8985, 8962, 4512, 4488, 4328])
+        meta = site.full_meta(self.rows, slugs.__getitem__, "2026-09-02", "x")
+        deployed = site.full_meta(self.rows, slugs.__getitem__, "2026-09-02", "x", as_deployed=True)
+        self.assertEqual([s["n"] for s in meta["funnel"]], [9190, 8985, 8962, 4552, 4328])
+        self.assertEqual([s["n"] for s in deployed["funnel"]], [9190, 8985, 8962, 4512, 4488, 4328])
+        # the median over all 4,328 counted rows; deployed, it left out the 8 with no saving
+        self.assertEqual((meta["medianSpp"], meta["ebayN"]), (13.46, 4292))
+        self.assertEqual(deployed["medianSpp"], 13.47)
+        self.assertNotIn("ebayN", deployed)
         with tempfile.TemporaryDirectory() as tmp:
             info = site.build_site(self.rows, tmp, generated="2026-09-02", source="cars9k_final.csv")
             index = (Path(tmp) / "index.html").read_text(encoding="utf-8")
@@ -67,15 +71,22 @@ class Sep2(unittest.TestCase):
             brands = [p.read_text(encoding="utf-8") for p in sorted((Path(tmp) / "b").glob("*.html"))]
         self.assertEqual((info["repair"], info["assembly"], info["upgrade"]),
                          (15634661.23, 8473815.37, 7880644.36))
-        self.assertIn("Assembly-only is a third total, kept out of the repair figure", index)
-        self.assertNotIn("subset", index)
-        self.assertNotIn("sensitivity", index)
+        self.assertIn("so the three totals add up to <b>", index)
+        self.assertIn("Assembly-only is kept out of the repair figure", index)
+        self.assertIn('<span class="hnoimg">no<br>photo</span>', index)
+        for gone in ("subset", "sensitivity", "never summed", "never added together", "reported separately"):
+            self.assertNotIn(gone, index)
         self.assertIn("function round2(x)", every)
-        self.assertNotIn("usd(rep + asm + upg)", every)
+        self.assertIn('" counted &middot; " + usd(rep + asm + upg) + " total"', every)
+        self.assertIn('r.surl ? "no<br>photo" : "no<br>listing"', every)
+        self.assertIn('var LOCAL = "tv-all-decisions-r2";', every)
+        self.assertEqual(every.count('"/api/state?key=r2-" + encodeURIComponent(slug)'), 2)
         self.assertEqual(len(brands), 78)
         for page in brands:
             self.assertIn("eBay&rsquo;s <em>active</em> listings", page)
             self.assertIn("function round2(x)", page)
+            self.assertIn('var STATE_URL = "/api/state?key=r2-', page)
+            self.assertIn('var KEY = "tv-review-decisions-r2-', page)
             for gone in ("<em>sold</em>", "sensitivity", "reported separately", '"Combined"',
                          "combined_total", "usd(s.repair + s.upgrade)", "--all"):
                 self.assertNotIn(gone, page)
