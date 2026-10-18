@@ -123,7 +123,7 @@ The run stops rather than writing bad rows when Thingiverse or eBay challenges t
 
 A veto removes a counted row's dollars. Accepting a listing re-prices a counted row, or rescues an uncounted one into its bucket. Keep confirms a row. Shipping is recorded and never added to the price. A decision that carries no photo keeps the photo already on file for that listing, the row's own or the matching candidate's.
 
-For the paper, AI agents made the review decisions, working through the review page under written rules; the `human_review` columns hold those decisions. The review rejected 8 counted rows, and 3 more were removed because their prices broke the pricing rules, so the paper counts 4,317 parts where Sep 2 counted 4,328.
+For the paper, AI agents made the review decisions, working through the review page under written rules; the `human_review` columns hold those decisions. The review rejected 8 counted rows, and 3 more were removed because their prices broke the pricing rules, so the paper counts 4,317 parts where Sep 2 counted 4,328. In the paper's reviewed table, the same columns also mark the 421 multi-unit rows that a script divided by their unit count (as `swapped`, dated 2026-10-13) and those 3 removals (as `vetoed`).
 
 ## Rebuilding the Sep 2 site
 
