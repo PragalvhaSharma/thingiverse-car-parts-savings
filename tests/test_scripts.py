@@ -127,6 +127,16 @@ class ApplyDecisions(unittest.TestCase):
         rows, counts, _ = self.apply({"5019865": dict(POOL_PICK, b="upgrade")})
         self.assertEqual((rows["5019865"]["bkt"], counts), ("upgrade", {"uncounted: rescued into upgrade": 1}))
 
+    def test_a_pick_without_a_photo_keeps_the_photo_on_file(self):
+        own, cand = self.before["7186295"], self.before["5019865"]["cands"][0]
+        rows, _, _ = self.apply({
+            "7186295": {"v": "accept", "u": own["surl"], "p": 5, "im": "", "src": "manual"},
+            "5019865": {"v": "accept", "u": cand["u"], "p": 5, "src": "manual"},
+            "3013735": {"v": "accept", "u": "https://www.ebay.com/itm/3", "p": 5, "im": "", "src": "manual"},
+        })
+        self.assertTrue(own["li"] and cand["im"])
+        self.assertEqual([rows[t]["li"] for t in ("7186295", "5019865", "3013735")], [own["li"], cand["im"], ""])
+
     def test_norm_decision(self):
         n = apply_review.norm_decision
         self.assertEqual([n("keep"), n("veto"), n({"v": "veto"}), n("maybe"), n(None), n(3)],

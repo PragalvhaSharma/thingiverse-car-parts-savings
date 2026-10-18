@@ -26,7 +26,8 @@ A rescued row has err, sx and sxu cleared, because the reviewer has overruled
 the model. A decision may also carry b (repair, assembly or upgrade) to put a
 rescued row in another bucket; the pages never write it, so set it by editing
 the JSON. The listing's shipping is recorded and, as everywhere in the study,
-not added to the price.
+not added to the price. A pick that carries no photo keeps the photo already on
+file for that listing: the row's own, or the matching candidate's.
 
 Four columns record what happened: human_review (confirmed, vetoed, swapped or
 accepted), human_review_at (the decision's timestamp), human_review_source
@@ -135,11 +136,21 @@ def bucket_of(row) -> str:
     return bucket_for(row["cls"], row["asm"])
 
 
+def listing_photo(row, d) -> str:
+    """The picked listing's photo: the decision's own, else the one on file for the same URL."""
+    if d.get("im"):
+        return d["im"]
+    if d["u"] == row.get("surl") and row.get("li"):
+        return row["li"]
+    return next((c["im"] for c in row.get("cands") or [] if c.get("u") == d["u"] and c.get("im")), "")
+
+
 def use_listing(row, d) -> None:
+    photo = listing_photo(row, d)
     row["p"] = round(float(d["p"]), 2)
     row["surl"] = d["u"]
     row["lt"] = d.get("t") or ""
-    row["li"] = d.get("im") or ""
+    row["li"] = photo
     host = urllib.parse.urlparse(d["u"]).netloc.lower()
     row["src"] = "eBay" if host == "ebay.com" or host.endswith(".ebay.com") else "manual"
     if row.get("cands"):
