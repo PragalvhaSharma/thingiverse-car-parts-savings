@@ -205,7 +205,7 @@ CORRECTIONS = {
         ("        combined_total: c(s.repair + s.upgrade),\n", ""),
         # the script has no --all flag; it works through every uncounted row by default
         ("<code>capture_candidates.py --all</code>", "<code>capture_candidates.py</code>"),
-        # the review was made by AI agents working through the pages (the paper, step 5)
+        # the pages say reviewer and checked for reviewed rows
         ("it as human-verified,", "it as checked,"),
         ("records that a human checked this row", "records that a reviewer checked this row"),
         ("are rows a human touched.", "are rows a reviewer touched."),
